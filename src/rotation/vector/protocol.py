@@ -4,8 +4,14 @@ from typing import Protocol, TypeVar, cast
 
 import numpy as np
 
-_R_co = TypeVar("_R_co", bound="RotationVectorLike", covariant=True)
-_R_ctor = TypeVar("_R_ctor", bound="RotationVectorLike")
+# Covariant: only used as the return type of ``RotationVectorType.__call__`` (Protocol requirement).
+_FactoryOutput = TypeVar(
+    "_FactoryOutput",
+    bound="RotationVectorLike",
+    covariant=True,
+)
+# The concrete ``type[...]`` passed to ``rotation_vector_ctor`` (same idea as ``_R`` in mixins).
+_Subclass = TypeVar("_Subclass", bound="RotationVectorLike")
 
 
 class RotationVectorLike(Protocol):
@@ -13,17 +19,21 @@ class RotationVectorLike(Protocol):
 
     value: np.ndarray
 
+    @classmethod
+    def zero_vector(cls) -> RotationVectorLike:
+        ...
 
-class RotationVectorType(Protocol[_R_co]):
+
+class RotationVectorType(Protocol[_FactoryOutput]):
     """
     Class object typed as a callable factory.
 
     Same rationale as :class:`RotationMatrixType` in ``matrix.protocol``.
     """
 
-    def __call__(self, *, value: np.ndarray) -> _R_co: ...
+    def __call__(self, *, value: np.ndarray) -> _FactoryOutput: ...
 
 
-def rotation_vector_ctor(cls: type[_R_ctor]) -> RotationVectorType[_R_ctor]:
+def rotation_vector_ctor(cls: type[_Subclass]) -> RotationVectorType[_Subclass]:
     """Narrow ``type[_R]`` / ``type(self)`` for ``(*, value: ndarray) -> _R`` calls."""
-    return cast(RotationVectorType[_R_ctor], cls)
+    return cast(RotationVectorType[_Subclass], cls)

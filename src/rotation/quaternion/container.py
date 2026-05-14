@@ -4,7 +4,7 @@ from functools import cached_property
 from scipy.spatial.transform import Rotation # type: ignore
 
 from .format import QuaternionFormat
-from ..matrix import RotationMatrix
+
 
 @dataclass(frozen=True)
 class Quaternion:
@@ -21,7 +21,7 @@ class Quaternion:
     value: np.ndarray
     format: QuaternionFormat
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate that the quaternion is valid."""
         self._is_valid_quaternion()
 
@@ -88,17 +88,18 @@ class Quaternion:
         return self.format.is_scalar_first
 
     @cached_property
-    def rotation_matrix(self) -> RotationMatrix:
+    def rotation_matrix(self) -> np.ndarray:
         """
         Convert quaternion to rotation matrix.
-        
+
         Returns
         -------
-        RotationMatrix:
-            The rotation matrix representation.
+        np.ndarray:
+            The 3×3 rotation matrix (float64), row-vector convention
+            ``v_new = R @ v``.
         """
         scipy_rotation = Rotation.from_quat(
-            self.value, 
-            scalar_first=self.is_scalar_first
-            )        
-        return RotationMatrix(value=scipy_rotation.as_matrix())
+            self.value,
+            scalar_first=self.is_scalar_first,
+        )
+        return np.asarray(scipy_rotation.as_matrix(), dtype=np.float64)

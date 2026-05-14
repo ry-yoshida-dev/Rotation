@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 
 from .skew_symmetric_matrix import SkewSymmetricMatrix
-from ..matrix import RotationMatrix
+
 
 @dataclass(frozen=True)
 class RodriguesRotationParameter:
@@ -94,34 +94,35 @@ class RodriguesRotationParameter:
                 f"Input vector must be a shape (3,) array, got shape {vector.shape}."
             )
 
-        return self.rotation_matrix.value @ vector
+        return self.rotation_matrix @ vector
 
     @cached_property
-    def rotation_matrix(self) -> RotationMatrix:
+    def rotation_matrix(self) -> np.ndarray:
         """
         Convert Rodrigues rotation parameter to rotation matrix.
 
         Returns
         -------
-        RotationMatrix:
-            The rotation matrix.
+        np.ndarray:
+            The 3×3 rotation matrix (float64), row-vector convention
+            ``v_new = R @ v``.
         """
         theta = np.linalg.norm(self.value)
 
         if theta < 1e-6:
-            return RotationMatrix(value=np.eye(3))
+            return np.eye(3, dtype=np.float64)
 
         normalized_rodrigues = RodriguesRotationParameter(value=self.value / theta)
 
         K = SkewSymmetricMatrix.from_k_parameter(
             k_x=normalized_rodrigues.x,
             k_y=normalized_rodrigues.y,
-            k_z=normalized_rodrigues.z
-            )
+            k_z=normalized_rodrigues.z,
+        )
 
-        I = np.eye(3) # Identity matrix
+        I = np.eye(3, dtype=np.float64)
         skew_term = np.sin(theta) * K.value
         symmetric_term = (1 - np.cos(theta)) * K.squared
         R = I + skew_term + symmetric_term
 
-        return RotationMatrix(value=R)
+        return np.asarray(R, dtype=np.float64)

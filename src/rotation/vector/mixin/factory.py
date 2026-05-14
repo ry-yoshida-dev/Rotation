@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -56,7 +56,7 @@ class RotationVectorFactoryMixin:
         theta = np.arccos(cos_theta)
 
         if np.isclose(theta, 0.0):
-            return cls.zero_vector()
+            return cast(_R, cls.zero_vector())
 
         axis_unnormalized = np.array(
             [
@@ -67,14 +67,19 @@ class RotationVectorFactoryMixin:
             dtype=np.float64,
         )
 
-        norm = np.linalg.norm(axis_unnormalized)
+        norm = float(np.linalg.norm(axis_unnormalized))
         if np.isclose(norm, 0.0):
             vals, vecs = np.linalg.eigh(R)
-            axis = vecs[:, np.isclose(vals, 1.0)][:, 0]
+            axis = cast(
+                npt.NDArray[np.float64],
+                vecs[:, np.isclose(vals, 1.0)][:, 0],
+            )
         else:
             axis = axis_unnormalized / norm
 
-        return rotation_vector_ctor(cls)(value=axis * theta)
+        return rotation_vector_ctor(cls)(
+            value=axis * np.float64(theta),
+        )
 
     @classmethod
     def zero_vector(cls: type[_R]) -> _R:
@@ -104,9 +109,9 @@ class RotationVectorFactoryMixin:
             The rotation angle in radians.
         """
         a = np.asarray(axis, dtype=np.float64).reshape(-1)
-        norm = np.linalg.norm(a)
+        norm = float(np.linalg.norm(a))
         if np.isclose(norm, 0.0):
-            return cls.zero_vector()
+            return cast(_R, cls.zero_vector())
 
         unit_axis = a / norm
-        return rotation_vector_ctor(cls)(value=unit_axis * angle)
+        return rotation_vector_ctor(cls)(value=unit_axis * np.float64(angle))
