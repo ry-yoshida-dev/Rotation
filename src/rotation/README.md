@@ -8,7 +8,6 @@ Utilities for representing 3D rotations: validated rotation matrices and composi
 
 | Component | Description |
 |-----------|-------------|
-| [matrix.py](./matrix.py) | `RotationMatrix` — validate 3×3 rotations, compose with `@`, build from identity or approximate matrices |
+| [matrix/](./matrix/README.md) | `RotationMatrix` — frozen dataclass for SO(3) 3×3 matrices, validation, factories, composition (`@`) |
 | [quaternion/](./quaternion/README.md) | `Quaternion` / `QuaternionFormat` — normalized quaternions and WXYZ / XYZW ordering |
 | [rodrigues/](./rodrigues/README.md) | `RodriguesRotationParameter` / `SkewSymmetricMatrix` — Rodrigues formula and skew-symmetric helpers |
-

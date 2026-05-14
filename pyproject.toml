@@ -21,6 +21,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy",
+    "opencv-contrib-python",
     "scipy",
     "units @ git+https://github.com/ry-yoshida-private/Units.git"
 ]
