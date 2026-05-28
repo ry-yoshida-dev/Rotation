@@ -23,12 +23,12 @@ dependencies = [
     "numpy",
     "opencv-contrib-python",
     "scipy",
-    "units @ git+https://github.com/ry-yoshida-private/Units.git"
+    "units @ git+https://github.com/ry-yoshida-dev/Units.git"
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ry-yoshida-private/Rotation"
-"Bug Tracker" = "https://github.com/ry-yoshida-private/Rotation/issues"
+"Homepage" = "https://github.com/ry-yoshida-dev/Rotation"
+"Bug Tracker" = "https://github.com/ry-yoshida-dev/Rotation/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
