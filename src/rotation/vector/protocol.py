@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol, TypeVar, cast
 
-import numpy as np
+from ..types import FloatArray
 
 # Covariant: only used as the return type of ``RotationVectorType.__call__`` (Protocol requirement).
 _FactoryOutput = TypeVar(
@@ -17,7 +17,7 @@ _Subclass = TypeVar("_Subclass", bound="RotationVectorLike")
 class RotationVectorLike(Protocol):
     """Structural typing for rotation-vector containers used by mixins."""
 
-    value: np.ndarray
+    value: FloatArray
 
     @classmethod
     def zero_vector(cls) -> RotationVectorLike:
@@ -28,10 +28,10 @@ class RotationVectorType(Protocol[_FactoryOutput]):
     """
     Class object typed as a callable factory.
 
-    Same rationale as :class:`RotationMatrixType` in ``matrix.protocol``.
+    Same rationale as :class:`RotationMatrixType` in ``matrix.protocols``.
     """
 
-    def __call__(self, *, value: np.ndarray) -> _FactoryOutput: ...
+    def __call__(self, *, value: FloatArray) -> _FactoryOutput: ...
 
 
 def rotation_vector_ctor(cls: type[_Subclass]) -> RotationVectorType[_Subclass]:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from ..protocol import RotationMatrixLike, rotation_matrix_ctor
+from ..protocols import RotationMatrixLike, rotation_matrix_ctor
 
 _R = TypeVar("_R", bound=RotationMatrixLike)
 

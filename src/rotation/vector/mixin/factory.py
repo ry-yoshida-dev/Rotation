@@ -5,6 +5,7 @@ from typing import TypeVar, cast
 import numpy as np
 import numpy.typing as npt
 
+from ...types import FloatArray
 from ...matrix import RotationMatrix
 from ..protocol import RotationVectorLike, rotation_vector_ctor
 
@@ -71,7 +72,7 @@ class RotationVectorFactoryMixin:
         if np.isclose(norm, 0.0):
             vals, vecs = np.linalg.eigh(R)
             axis = cast(
-                npt.NDArray[np.float64],
+                FloatArray,
                 vecs[:, np.isclose(vals, 1.0)][:, 0],
             )
         else:

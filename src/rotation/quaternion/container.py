@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from scipy.spatial.transform import Rotation # type: ignore
 
+from ..types import FloatArray
 from .format import QuaternionFormat
 
 
@@ -13,12 +14,12 @@ class Quaternion:
 
     Parameters
     ----------
-    value: np.ndarray
+    value: FloatArray
         Quaternion values with shape (4,).
     format: QuaternionFormat
         The format of the quaternion (WXYZ or XYZW). Default is WXYZ.
     """
-    value: np.ndarray
+    value: FloatArray
     format: QuaternionFormat
 
     def __post_init__(self) -> None:
@@ -44,13 +45,13 @@ class Quaternion:
             raise ValueError(f"Invalid quaternion: must be normalized (norm={norm})")
 
     @property
-    def wxyz(self) -> np.ndarray:
+    def wxyz(self) -> FloatArray:
         """
         Get quaternion in WXYZ format.
         
         Returns
         -------
-        np.ndarray:
+        FloatArray:
             The quaternion in WXYZ format.
         """
         match self.format:
@@ -60,13 +61,13 @@ class Quaternion:
                 return np.roll(self.value, 1)
 
     @property
-    def xyzw(self) -> np.ndarray:
+    def xyzw(self) -> FloatArray:
         """
         Get quaternion in XYZW format (scipy format).
         
         Returns
         -------
-        np.ndarray:
+        FloatArray:
             The quaternion in XYZW format.
         """
         match self.format:
@@ -88,13 +89,13 @@ class Quaternion:
         return self.format.is_scalar_first
 
     @cached_property
-    def rotation_matrix(self) -> np.ndarray:
+    def rotation_matrix(self) -> FloatArray:
         """
         Convert quaternion to rotation matrix.
 
         Returns
         -------
-        np.ndarray:
+        FloatArray:
             The 3×3 rotation matrix (float64), row-vector convention
             ``v_new = R @ v``.
         """

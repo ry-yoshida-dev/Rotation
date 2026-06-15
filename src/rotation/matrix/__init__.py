@@ -1,5 +1,5 @@
 from .container import RotationMatrix
-from .protocol import RotationMatrixLike, RotationMatrixType
+from .protocols import RotationMatrixLike, RotationMatrixType
 
 __all__ = [
     "RotationMatrix",

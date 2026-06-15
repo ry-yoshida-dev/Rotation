@@ -2,6 +2,8 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+from ..types import FloatArray
+
 @dataclass(frozen=True)
 class SkewSymmetricMatrix:
     """
@@ -9,10 +11,10 @@ class SkewSymmetricMatrix:
     
     Attributes
     ----------
-    value: np.ndarray
+    value: FloatArray
         The skew symmetric matrix with shape (3, 3).
     """
-    value: np.ndarray
+    value: FloatArray
 
     def __post_init__(self) -> None:
         """
@@ -29,13 +31,13 @@ class SkewSymmetricMatrix:
             )
 
     @property
-    def squared(self) -> np.ndarray:
+    def squared(self) -> FloatArray:
         """
         Return the squared of the skew symmetric matrix.
 
         Returns
         -------
-        np.ndarray:
+        FloatArray:
             The squared of the skew symmetric matrix with shape (3, 3).
         """
         return self.value @ self.value

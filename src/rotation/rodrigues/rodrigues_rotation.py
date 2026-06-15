@@ -2,6 +2,7 @@ import numpy as np
 from dataclasses import dataclass
 from functools import cached_property
 
+from ..types import FloatArray
 from .skew_symmetric_matrix import SkewSymmetricMatrix
 
 
@@ -12,10 +13,10 @@ class RodriguesRotationParameter:
 
     Attributes
     ----------
-    value: np.ndarray
+    value: FloatArray
         The Rodrigues rotation parameter.
     """
-    value: np.ndarray
+    value: FloatArray
 
     def __post_init__(self) -> None:
         """
@@ -69,19 +70,19 @@ class RodriguesRotationParameter:
 
     def transform(
         self, 
-        vector: np.ndarray,
-        ) -> np.ndarray:
+        vector: FloatArray,
+        ) -> FloatArray:
         """
         Apply Rodrigues rotation formula to transform a vector.
         
         Parameters
         ----------
-        vector: np.ndarray
+        vector: FloatArray
             Vector to be rotated with shape (3,).
             
         Returns
         -------
-        np.ndarray
+        FloatArray
             Transformed vector with shape (3,).
 
         Raises
@@ -97,13 +98,13 @@ class RodriguesRotationParameter:
         return self.rotation_matrix @ vector
 
     @cached_property
-    def rotation_matrix(self) -> np.ndarray:
+    def rotation_matrix(self) -> FloatArray:
         """
         Convert Rodrigues rotation parameter to rotation matrix.
 
         Returns
         -------
-        np.ndarray:
+        FloatArray:
             The 3×3 rotation matrix (float64), row-vector convention
             ``v_new = R @ v``.
         """

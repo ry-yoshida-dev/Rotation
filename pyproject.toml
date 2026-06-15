@@ -26,6 +26,15 @@ dependencies = [
     "units @ git+https://github.com/ry-yoshida-dev/Units.git"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
 [project.urls]
 "Homepage" = "https://github.com/ry-yoshida-dev/Rotation"
 "Bug Tracker" = "https://github.com/ry-yoshida-dev/Rotation/issues"

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Behavior split across mixins so `RotationMatrix` stays a small container. Each mixin targets `RotationMatrixLike` (`value: np.ndarray`) so subclasses can reuse the same logic with static typing preserved via `RotationMatrixType` / `rotation_matrix_ctor`.
+Behavior split across mixins so `RotationMatrix` stays a small container. Each mixin targets `RotationMatrixLike` (`value: FloatArray`) so subclasses can reuse the same logic with static typing preserved via `RotationMatrixType` / `rotation_matrix_ctor`.
 
 ## Components
 

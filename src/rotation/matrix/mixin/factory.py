@@ -5,7 +5,8 @@ from typing import TypeVar
 import numpy as np
 import numpy.typing as npt
 
-from ..protocol import RotationMatrixLike, rotation_matrix_ctor
+from ...types import FloatArray
+from ..protocols import RotationMatrixLike, rotation_matrix_ctor
 
 _R = TypeVar("_R", bound=RotationMatrixLike)
 
@@ -70,7 +71,7 @@ class RotationMatrixFactoryMixin:
         """
         arr = np.asarray(value, dtype=np.float64)
         u, _, vh = np.linalg.svd(arr)
-        rotation_matrix: np.ndarray = u @ vh
+        rotation_matrix: FloatArray = u @ vh
 
         if np.linalg.det(rotation_matrix) < 0:
             u = u.copy()
@@ -88,7 +89,7 @@ class RotationMatrixFactoryMixin:
         """
         Raise ``ValueError`` unless ``value`` is a proper 3×3 rotation matrix in SO(3).
 
-        Use this when accepting a raw ``np.ndarray`` so invalid matrices cannot slip through
+        Use this when accepting a raw ``FloatArray`` so invalid matrices cannot slip through
         without constructing :class:`RotationMatrix`.
         """
         arr = np.asarray(value, dtype=np.float64)

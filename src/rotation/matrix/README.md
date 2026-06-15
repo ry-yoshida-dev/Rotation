@@ -11,7 +11,7 @@ Composition uses `@` and returns a new instance of the same concrete type. Facto
 | Component | Description |
 |-----------|-------------|
 | [container.py](./container.py) | `RotationMatrix` — `value`, validation in `__post_init__`, `rotation_vector`, transpose / inverse as raw arrays |
-| [protocol.py](./protocol.py) | `RotationMatrixLike`, `RotationMatrixType`, `rotation_matrix_ctor` — typing for mixins and `type(self)` factories |
+| [protocols/](./protocols/README.md) | `RotationMatrixLike`, `RotationMatrixType`, `rotation_matrix_ctor` — typing for mixins and `type(self)` factories |
 | [mixin/](./mixin/README.md) | Axis accessors, classmethod factories, and `__matmul__` |
 
 See the parent package [../README.md](../README.md) for context.

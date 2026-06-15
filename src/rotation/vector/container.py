@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from dataclasses import dataclass
 
+from ..types import FloatArray
 from .mixin.factory import RotationVectorFactoryMixin
 
 
@@ -17,7 +18,7 @@ class RotationVector(RotationVectorFactoryMixin):
 
     Attributes
     ----------
-    value : np.ndarray
+    value : FloatArray
         The rotation vector with shape (3,).
 
     Raises
@@ -25,7 +26,7 @@ class RotationVector(RotationVectorFactoryMixin):
     ValueError:
         If the input array is not a shape (3,) array.
     """
-    value: np.ndarray
+    value: FloatArray
 
     def __post_init__(self) -> None:
         """Validate the rotation vector."""
@@ -50,14 +51,14 @@ class RotationVector(RotationVectorFactoryMixin):
         return float(np.linalg.norm(self.value))
 
     @property
-    def rotation_matrix(self) -> np.ndarray:
+    def rotation_matrix(self) -> FloatArray:
         """
         Rotation matrix for this vector (Rodrigues' formula via OpenCV cv2.Rodrigues).
 
         Returns
         -------
-        np.ndarray: The corresponding 3x3 rotation matrix (float64).
+        FloatArray: The corresponding 3x3 rotation matrix (float64).
         """
         rvec = np.asarray(self.value, dtype=np.float64).reshape(3, 1)
         rotation_matrix, _ = cv2.Rodrigues(rvec)
-        return rotation_matrix
+        return np.asarray(rotation_matrix, dtype=np.float64)
