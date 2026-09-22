@@ -1,4 +1,3 @@
 numpy
-opencv-contrib-python
-scipy
+scipy>=1.14
 units @ git+https://github.com/ry-yoshida-dev/Units.git

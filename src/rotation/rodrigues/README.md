@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rodrigues rotation parameters (3D vectors encoding axis direction and rotation magnitude) and the associated skew-symmetric matrices.  
+Rodrigues rotation parameters in rotation vector form (direction = axis, norm = angle in radians; not the Gibbs vector `tan(θ/2)·axis`) and the associated skew-symmetric matrices.  
 `RodriguesRotationParameter` converts to a 3×3 rotation matrix (`numpy.ndarray`) via Rodrigues’ formula; points can be rotated with `transform`.
 
 ## Components

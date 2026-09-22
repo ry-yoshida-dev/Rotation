@@ -3,11 +3,12 @@ from dataclasses import dataclass
 from functools import cached_property
 from scipy.spatial.transform import Rotation # type: ignore
 
+from ..utils import to_readonly_array
 from ..types import FloatArray
 from .format import QuaternionFormat
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Quaternion:
     """
     Container class for quaternion representation of rotation.
@@ -17,13 +18,14 @@ class Quaternion:
     value: FloatArray
         Quaternion values with shape (4,).
     format: QuaternionFormat
-        The format of the quaternion (WXYZ or XYZW). Default is WXYZ.
+        The format of the quaternion (WXYZ or XYZW).
     """
     value: FloatArray
     format: QuaternionFormat
 
     def __post_init__(self) -> None:
-        """Validate that the quaternion is valid."""
+        """Store a read-only copy of the quaternion and validate it."""
+        object.__setattr__(self, "value", to_readonly_array(self.value))
         self._is_valid_quaternion()
 
     def _is_valid_quaternion(self) -> None:
@@ -96,7 +98,7 @@ class Quaternion:
         Returns
         -------
         FloatArray:
-            The 3×3 rotation matrix (float64), row-vector convention
+            The 3×3 rotation matrix (float64), column-vector convention
             ``v_new = R @ v``.
         """
         scipy_rotation = Rotation.from_quat(

@@ -2,9 +2,10 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+from ..utils import to_readonly_array
 from ..types import FloatArray
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class SkewSymmetricMatrix:
     """
     Container class for skew symmetric matrix.
@@ -18,13 +19,14 @@ class SkewSymmetricMatrix:
 
     def __post_init__(self) -> None:
         """
-        Validate that the skew symmetric matrix is valid.
-        
+        Store a read-only copy of the matrix and validate it.
+
         Raises
         ------
         ValueError:
             If the skew symmetric matrix is not a shape (3, 3) array.
         """
+        object.__setattr__(self, "value", to_readonly_array(self.value))
         if self.value.shape != (3, 3):
             raise ValueError(
                 f"Skew symmetric matrix must be a shape (3, 3) array, got shape {self.value.shape}."

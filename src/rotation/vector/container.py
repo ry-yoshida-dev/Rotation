@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import cv2
 import numpy as np
 from dataclasses import dataclass
+from scipy.spatial.transform import Rotation  # type: ignore
 
+from ..utils import to_readonly_array
 from ..types import FloatArray
 from .mixin.factory import RotationVectorFactoryMixin
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class RotationVector(RotationVectorFactoryMixin):
     """
     Container class for rotation vector (axis-angle) representation.
@@ -29,7 +30,8 @@ class RotationVector(RotationVectorFactoryMixin):
     value: FloatArray
 
     def __post_init__(self) -> None:
-        """Validate the rotation vector."""
+        """Store a read-only copy of the vector and validate it."""
+        object.__setattr__(self, "value", to_readonly_array(self.value))
         self._is_valid_rotation_vector()
 
     def _is_valid_rotation_vector(self) -> None:
@@ -53,12 +55,11 @@ class RotationVector(RotationVectorFactoryMixin):
     @property
     def rotation_matrix(self) -> FloatArray:
         """
-        Rotation matrix for this vector (Rodrigues' formula via OpenCV cv2.Rodrigues).
+        Rotation matrix for this vector (via scipy ``Rotation.from_rotvec``).
 
         Returns
         -------
         FloatArray: The corresponding 3x3 rotation matrix (float64).
         """
-        rvec = np.asarray(self.value, dtype=np.float64).reshape(3, 1)
-        rotation_matrix, _ = cv2.Rodrigues(rvec)
-        return np.asarray(rotation_matrix, dtype=np.float64)
+        scipy_rotation = Rotation.from_rotvec(self.value)
+        return np.asarray(scipy_rotation.as_matrix(), dtype=np.float64)

@@ -17,7 +17,8 @@ _Subclass = TypeVar("_Subclass", bound="RotationVectorLike")
 class RotationVectorLike(Protocol):
     """Structural typing for rotation-vector containers used by mixins."""
 
-    value: FloatArray
+    @property
+    def value(self) -> FloatArray: ...
 
     @classmethod
     def zero_vector(cls) -> RotationVectorLike:

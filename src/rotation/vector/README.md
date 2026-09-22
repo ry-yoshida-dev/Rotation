@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rotation vectors (axis–angle): direction of the vector is the rotation axis, length is the angle in radians. `RotationVector` is a small frozen container; classmethods on the mixin build instances from matrices or axis–angle pairs, and `rotation_matrix` returns a 3×3 `numpy.ndarray` (via OpenCV `Rodrigues`).
+Rotation vectors (axis–angle): direction of the vector is the rotation axis, length is the angle in radians. `RotationVector` is a small frozen container; classmethods on the mixin build instances from matrices or axis–angle pairs, and `rotation_matrix` returns a 3×3 `numpy.ndarray` (via `scipy.spatial.transform.Rotation`).
 
 ## Components
 
@@ -40,5 +40,5 @@ v_from_R = RotationVector.from_matrix(R)
 
 # Magnitude = angle (rad); matrix as ndarray
 theta = v.angle
-R_opencv = v.rotation_matrix
+R_from_v = v.rotation_matrix
 ```

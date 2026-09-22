@@ -2,31 +2,37 @@ import numpy as np
 from dataclasses import dataclass
 from functools import cached_property
 
+from ..utils import to_readonly_array
 from ..types import FloatArray
 from .skew_symmetric_matrix import SkewSymmetricMatrix
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class RodriguesRotationParameter:
     """
     Container class for Rodrigues rotation parameter.
 
+    The parameter is the rotation vector form: its direction is the rotation axis
+    and its norm is the rotation angle in radians. It is not the Gibbs vector
+    ``tan(theta / 2) * axis``.
+
     Attributes
     ----------
     value: FloatArray
-        The Rodrigues rotation parameter.
+        The Rodrigues rotation parameter with shape (3,).
     """
     value: FloatArray
 
     def __post_init__(self) -> None:
         """
-        Validate that the Rodrigues rotation parameter is valid.
-        
+        Store a read-only copy of the parameter and validate it.
+
         Raises
         ------
         ValueError:
             If the Rodrigues rotation vector is not a shape (3,) array.
         """
+        object.__setattr__(self, "value", to_readonly_array(self.value))
         if self.value.shape != (3,):
             raise ValueError(
                 f"Rodrigues rotation vector must be a shape (3,) array, got shape {self.value.shape}."
@@ -42,7 +48,7 @@ class RodriguesRotationParameter:
         float:
             The x component of the Rodrigues rotation parameter.
         """
-        return self.value[0]
+        return float(self.value[0])
 
     @property
     def y(self) -> float:
@@ -54,7 +60,7 @@ class RodriguesRotationParameter:
         float:
             The y component of the Rodrigues rotation parameter.
         """
-        return self.value[1]
+        return float(self.value[1])
 
     @property
     def z(self) -> float:
@@ -66,10 +72,10 @@ class RodriguesRotationParameter:
         float:
             The z component of the Rodrigues rotation parameter.
         """
-        return self.value[2]
+        return float(self.value[2])
 
     def transform(
-        self, 
+        self,
         vector: FloatArray,
         ) -> FloatArray:
         """
@@ -105,7 +111,7 @@ class RodriguesRotationParameter:
         Returns
         -------
         FloatArray:
-            The 3×3 rotation matrix (float64), row-vector convention
+            The 3×3 rotation matrix (float64), column-vector convention
             ``v_new = R @ v``.
         """
         theta = np.linalg.norm(self.value)

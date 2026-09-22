@@ -3,13 +3,14 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+from ..utils import to_readonly_array
 from ..types import FloatArray
 from .mixin.axis import RotationMatrixAxisMixin
 from .mixin.factory import RotationMatrixFactoryMixin
 from .mixin.special import RotationMatrixSpecialMixin
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class RotationMatrix(
     RotationMatrixFactoryMixin,
     RotationMatrixAxisMixin,
@@ -33,7 +34,8 @@ class RotationMatrix(
     value: FloatArray
 
     def __post_init__(self) -> None:
-        """Validate that the rotation matrix is valid."""
+        """Store a read-only copy of the matrix and validate it."""
+        object.__setattr__(self, "value", to_readonly_array(self.value))
         type(self).validate_rotation_matrix_array(self.value)
 
     @property
@@ -58,7 +60,7 @@ class RotationMatrix(
         bool:
             True if the determinant is +1, False otherwise.
         """
-        return np.isclose(np.linalg.det(self.value), 1.0, atol=1e-6)
+        return bool(np.isclose(np.linalg.det(self.value), 1.0, atol=1e-6))
 
     @property
     def T(self) -> FloatArray:
