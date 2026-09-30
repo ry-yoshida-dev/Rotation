@@ -13,7 +13,6 @@ Pytest suite for the `rotation` package: type aliases, validation, factories, an
 | [test_rotation_matrix.py](./test_rotation_matrix.py) | `RotationMatrix` validation, factories, composition |
 | [test_rotation_vector.py](./test_rotation_vector.py) | `RotationVector` factories and matrix conversion |
 | [test_quaternion.py](./test_quaternion.py) | `Quaternion` validation, layout accessors, matrix conversion |
-| [test_rodrigues.py](./test_rodrigues.py) | `RodriguesRotationParameter` and `SkewSymmetricMatrix` |
 
 ## Examples
 

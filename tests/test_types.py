@@ -6,7 +6,6 @@ import numpy as np
 
 from rotation.matrix import RotationMatrix
 from rotation.quaternion import Quaternion, QuaternionFormat
-from rotation.rodrigues import RodriguesRotationParameter
 from rotation.types import FloatArray
 from rotation.vector import RotationVector
 
@@ -54,13 +53,3 @@ class TestFloatArray:
             format=QuaternionFormat.WXYZ,
         )
         assert np.issubdtype(quaternion.value.dtype, np.floating)
-
-    def test_rodrigues_value_is_floating(self, rotation_z_90_vector: np.ndarray) -> None:
-        """
-        Verify RodriguesRotationParameter.value is a floating ndarray.
-
-        Input: 90° rotation about +Z.
-        Output: value dtype is floating.
-        """
-        rodrigues = RodriguesRotationParameter(value=rotation_z_90_vector)
-        assert np.issubdtype(rodrigues.value.dtype, np.floating)
