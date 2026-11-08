@@ -10,6 +10,7 @@ from scipy.spatial.transform import Rotation
 from ..single import SingleRotation
 from ..types import FloatArray
 from ..utils import to_readonly_array
+from .skew_symmetric import SkewSymmetricMatrix
 
 
 @dataclass(frozen=True, eq=False)
@@ -72,6 +73,37 @@ class RotationVector(SingleRotation):
         if np.isclose(norm, 0.0):
             raise ValueError("Invalid rotation axis: must have non-zero length.")
         return cls(value=axis_array * (angle / norm))
+
+    @classmethod
+    def from_skew_matrix(cls, matrix: npt.ArrayLike) -> Self:
+        """
+        Create a rotation vector from its skew-symmetric matrix, the vee map.
+
+        Parameters
+        ----------
+        matrix : array_like
+            Skew-symmetric matrix ``[ω]×`` with shape (3, 3).
+
+        Raises
+        ------
+        ValueError
+            If ``matrix`` does not have shape (3, 3) or is not skew-symmetric.
+        """
+        array = np.asarray(matrix, dtype=np.float64)
+        if array.shape != (3, 3):
+            raise ValueError(
+                f"Invalid matrix: must be a shape (3, 3) array, got shape {array.shape}."
+            )
+        return cls(value=SkewSymmetricMatrix.to_vectors(array))
+
+    @property
+    def skew_matrix(self) -> FloatArray:
+        """
+        Return the skew-symmetric matrix ``[ω]×`` with shape (3, 3), the hat map.
+
+        It is the Lie algebra element of the rotation, and ``[ω]× @ v = ω × v``.
+        """
+        return SkewSymmetricMatrix.from_vectors(self.value)
 
     @property
     def length(self) -> float:

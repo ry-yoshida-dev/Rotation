@@ -83,3 +83,27 @@ class RotationRepresentation(ABC):
                 f"Invalid vectors: must be a shape (3,) or (M, 3) array, got shape {array.shape}."
             )
         return np.asarray(self._rotation.apply(array), dtype=np.float64)
+
+    @staticmethod
+    def _random_scipy(
+        generator: np.random.Generator, shape: tuple[int, ...]
+    ) -> Rotation:
+        # Normalized 4D Gaussian samples are uniform on the unit quaternions, hence on SO(3).
+        components = generator.standard_normal((*shape, 4))
+        components /= np.linalg.norm(components, axis=-1, keepdims=True)
+        return Rotation.from_quat(components, scalar_first=True)
+
+    @staticmethod
+    def _as_weights(weights: npt.ArrayLike | None, count: int) -> FloatArray | None:
+        if weights is None:
+            return None
+        array = np.asarray(weights, dtype=np.float64)
+        if array.shape != (count,):
+            raise ValueError(
+                f"Invalid weights: must be a shape ({count},) array, got shape {array.shape}."
+            )
+        if not np.all(np.isfinite(array)) or np.any(array < 0.0):
+            raise ValueError("Invalid weights: must be finite and non-negative.")
+        if not np.any(array > 0.0):
+            raise ValueError("Invalid weights: must have at least one positive weight.")
+        return array

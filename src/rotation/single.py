@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import Self
 
+import numpy as np
+import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
 from .representation import RotationRepresentation
@@ -32,6 +34,71 @@ class SingleRotation(RotationRepresentation, ABC):
     def identity(cls) -> Self:
         """Create the identity rotation, which leaves every vector unchanged."""
         return cls._from_scipy(Rotation.identity())
+
+    @classmethod
+    def random(cls, generator: np.random.Generator) -> Self:
+        """
+        Draw a rotation uniformly at random from SO(3).
+
+        Parameters
+        ----------
+        generator : numpy.random.Generator
+            Source of randomness, such as ``np.random.default_rng(seed)``.
+        """
+        return cls._from_scipy(cls._random_scipy(generator, ()))
+
+    @classmethod
+    def align_vectors(
+        cls,
+        sources: npt.ArrayLike,
+        targets: npt.ArrayLike,
+        weights: npt.ArrayLike | None = None,
+    ) -> Self:
+        """
+        Estimate the rotation that best maps ``sources`` onto ``targets``.
+
+        This solves Wahba's problem with the Kabsch algorithm: it returns the rotation
+        ``R`` minimizing ``sum(w_i * |t_i - R @ s_i|^2)``. With one pair of vectors,
+        it returns the smallest rotation that maps the source direction onto the
+        target direction. Use it to align point sets, after subtracting each set's
+        centroid.
+
+        Parameters
+        ----------
+        sources : array_like
+            Vectors before the rotation, with shape (M, 3).
+        targets : array_like
+            Corresponding vectors after the rotation, with shape (M, 3).
+        weights : array_like or None, default None
+            Non-negative weight of each pair with shape (M,). ``None`` weighs every
+            pair equally.
+
+        Raises
+        ------
+        ValueError
+            If ``sources`` and ``targets`` do not have the same shape (M, 3) with
+            M >= 1, or if ``weights`` does not have shape (M,), is negative or
+            non-finite, or is zero everywhere.
+        """
+        source_array = np.asarray(sources, dtype=np.float64)
+        target_array = np.asarray(targets, dtype=np.float64)
+        if (
+            source_array.ndim != 2
+            or source_array.shape[1] != 3
+            or source_array.shape[0] == 0
+        ):
+            raise ValueError(
+                f"Invalid sources: must be a shape (M, 3) array with M >= 1, got shape {source_array.shape}."
+            )
+        if target_array.shape != source_array.shape:
+            raise ValueError(
+                f"Invalid targets: must have the shape of sources {source_array.shape}, got shape {target_array.shape}."
+            )
+        weight_array = cls._as_weights(weights, len(source_array))
+        rotation, _ = Rotation.align_vectors(
+            target_array, source_array, weights=weight_array
+        )
+        return cls._from_scipy(rotation)
 
     @property
     def angle(self) -> float:

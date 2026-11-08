@@ -2,7 +2,7 @@
 
 ## Overview
 
-`rotation` is a Python package for 3D rotations as mathematical objects in SO(3). Every representation converts into every other, and they share one set of operations: composition with `@`, inverse, powers, applying to vectors, and the angle between rotations. Each representation also has a batch class that processes N rotations at once with vectorized operations. Coordinate handedness and Euler angles are out of scope.
+`rotation` is a Python package for 3D rotations as mathematical objects in SO(3). Every representation converts into every other, and they share one set of operations: composition with `@`, inverse, powers, applying to vectors, the angle between rotations, uniform random sampling, and estimation from vector correspondences (Kabsch). Each representation also has a batch class that processes N rotations at once with vectorized operations. Coordinate handedness and Euler angles are out of scope.
 
 | Representation | Single | Batch | Stored value of one rotation |
 | --- | --- | --- | --- |
@@ -48,4 +48,15 @@ quaternions = Quaternions.from_rotation(turns)
 print((quaternions @ matrix).angles_to(turns))  # [1.5707..., 1.5707..., 1.5707...]
 print(quaternions.apply(np.eye(3)).shape)  # (3, 3), one vector per rotation
 print(quaternions[0])  # Quaternion(...)
+print(quaternions.mean().angle)  # 0.124...
+```
+
+Estimate the rotation between corresponding vectors:
+
+```python
+generator = np.random.default_rng(0)
+truth = RotationMatrix.random(generator)
+sources = generator.standard_normal((10, 3))
+estimate = RotationMatrix.align_vectors(sources, truth.apply(sources))
+print(estimate.is_close(truth))  # True
 ```

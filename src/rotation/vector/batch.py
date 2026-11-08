@@ -11,6 +11,7 @@ from ..batch import BatchRotation
 from ..types import FloatArray
 from ..utils import to_readonly_array
 from .single import RotationVector
+from .skew_symmetric import SkewSymmetricMatrix
 
 
 @dataclass(frozen=True, eq=False)
@@ -77,6 +78,34 @@ class RotationVectors(BatchRotation[RotationVector]):
         if np.any(np.isclose(norms, 0.0)):
             raise ValueError("Invalid rotation axes: must have non-zero length.")
         return cls(value=axes_array * (angles_array / norms)[:, np.newaxis])
+
+    @classmethod
+    def from_skew_matrices(cls, matrices: npt.ArrayLike) -> Self:
+        """
+        Create rotation vectors from their skew-symmetric matrices, the vee map.
+
+        Parameters
+        ----------
+        matrices : array_like
+            Skew-symmetric matrices with shape (N, 3, 3).
+
+        Raises
+        ------
+        ValueError
+            If ``matrices`` does not have shape (N, 3, 3) or a matrix is not
+            skew-symmetric.
+        """
+        array = np.asarray(matrices, dtype=np.float64)
+        if array.ndim != 3 or array.shape[1:] != (3, 3):
+            raise ValueError(
+                f"Invalid matrices: must be a shape (N, 3, 3) array, got shape {array.shape}."
+            )
+        return cls(value=SkewSymmetricMatrix.to_vectors(array).reshape(-1, 3))
+
+    @property
+    def skew_matrices(self) -> FloatArray:
+        """Return the skew-symmetric matrix of each vector with shape (N, 3, 3), the hat map."""
+        return SkewSymmetricMatrix.from_vectors(self.value)
 
     @property
     def lengths(self) -> FloatArray:

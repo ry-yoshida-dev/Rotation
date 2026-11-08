@@ -5,6 +5,7 @@ from collections.abc import Iterator, Sequence
 from typing import Generic, Self, TypeVar, cast, overload
 
 import numpy as np
+import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
 from .representation import RotationRepresentation
@@ -78,6 +79,54 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
         if count < 0:
             raise ValueError(f"Invalid count: must be non-negative, got {count}.")
         return cls._from_scipy(Rotation.identity(count))
+
+    @classmethod
+    def random(cls, count: int, generator: np.random.Generator) -> Self:
+        """
+        Draw ``count`` rotations independently and uniformly at random from SO(3).
+
+        Parameters
+        ----------
+        count : int
+            Number of rotations.
+        generator : numpy.random.Generator
+            Source of randomness, such as ``np.random.default_rng(seed)``.
+
+        Raises
+        ------
+        ValueError
+            If ``count`` is negative.
+        """
+        if count < 0:
+            raise ValueError(f"Invalid count: must be non-negative, got {count}.")
+        return cls._from_scipy(cls._random_scipy(generator, (count,)))
+
+    def mean(self, weights: npt.ArrayLike | None = None) -> _SingleRotationT:
+        """
+        Return the mean rotation, which minimizes the weighted sum of squared chordal distances.
+
+        The chordal distance is the Frobenius distance between rotation matrices. For
+        rotations spread less than about 90° apart, the result is close to the
+        geodesic mean.
+
+        Parameters
+        ----------
+        weights : array_like or None, default None
+            Non-negative weight of each rotation with shape (N,). ``None`` weighs
+            every rotation equally.
+
+        Raises
+        ------
+        ValueError
+            If the batch is empty, or if ``weights`` does not have shape (N,), is
+            negative or non-finite, or is zero everywhere.
+        """
+        if len(self) == 0:
+            raise ValueError("The mean of an empty batch is undefined.")
+        weight_array = self._as_weights(weights, len(self))
+        return self._single_type()._from_scipy(
+            self._rotation.mean(weights=weight_array)
+        )
 
     @property
     def angles(self) -> FloatArray:
