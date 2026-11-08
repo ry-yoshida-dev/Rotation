@@ -1,4 +1,7 @@
-from .container import Quaternion
 from .format import QuaternionFormat
+from .single import Quaternion
 
-__all__ = ["Quaternion", "QuaternionFormat"]
+__all__ = [
+    "Quaternion",
+    "QuaternionFormat",
+]

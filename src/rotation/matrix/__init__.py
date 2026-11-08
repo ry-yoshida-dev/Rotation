@@ -1,7 +1,7 @@
-from .container import RotationMatrix
-from .protocol import RotationMatrixLike
+from .single import RotationMatrix
+from .special_orthogonal import SpecialOrthogonalMatrix
 
 __all__ = [
     "RotationMatrix",
-    "RotationMatrixLike",
+    "SpecialOrthogonalMatrix",
 ]

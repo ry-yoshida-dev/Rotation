@@ -1,0 +1,153 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Self, cast
+
+import numpy as np
+import numpy.typing as npt
+from scipy.spatial.transform import Rotation
+
+from ..single import SingleRotation
+from ..types import FloatArray
+from ..utils import to_readonly_array
+from .format import QuaternionFormat
+
+
+@dataclass(frozen=True, eq=False)
+class Quaternion(SingleRotation):
+    """
+    Rotation stored as a unit quaternion ``w + xi + yj + zk``.
+
+    ``q`` and ``-q`` represent the same rotation. Composition with ``@`` is the
+    Hamilton product, so its sign follows from the operands; use ``canonical`` for a
+    unique sign.
+
+    Parameters
+    ----------
+    value : FloatArray
+        Quaternion components with shape (4,) in scalar-first order ``[w, x, y, z]``.
+        Use ``from_components`` for scalar-last input.
+
+    Raises
+    ------
+    ValueError
+        If ``value`` does not have shape (4,) or is not normalized within an absolute
+        tolerance of 1e-6.
+    """
+
+    value: FloatArray
+
+    def __post_init__(self) -> None:
+        """Validate the quaternion and store a read-only float64 copy of it."""
+        components = Quaternion._as_components(self.value)
+        norm = float(np.linalg.norm(components))
+        if not np.isclose(norm, 1.0, atol=1e-6):
+            raise ValueError(
+                f"Invalid quaternion: must be normalized, got norm {norm}."
+            )
+        object.__setattr__(self, "value", to_readonly_array(components))
+
+    @classmethod
+    def from_components(
+        cls, components: npt.ArrayLike, format: QuaternionFormat
+    ) -> Self:
+        """
+        Create a quaternion from unit components in the given order.
+
+        Parameters
+        ----------
+        components : array_like
+            Unit quaternion with shape (4,).
+        format : QuaternionFormat
+            Order of ``components``.
+
+        Raises
+        ------
+        ValueError
+            If ``components`` does not have shape (4,) or is not normalized.
+        """
+        array = Quaternion._as_components(components)
+        return cls(value=format.to_wxyz(array))
+
+    @classmethod
+    def from_unnormalized_components(
+        cls, components: npt.ArrayLike, format: QuaternionFormat
+    ) -> Self:
+        """
+        Create a quaternion by normalizing components in the given order.
+
+        Parameters
+        ----------
+        components : array_like
+            Non-zero quaternion with shape (4,).
+        format : QuaternionFormat
+            Order of ``components``.
+
+        Raises
+        ------
+        ValueError
+            If ``components`` does not have shape (4,) or has zero length.
+        """
+        array = Quaternion._as_components(components)
+        norm = float(np.linalg.norm(array))
+        if np.isclose(norm, 0.0):
+            raise ValueError("Invalid quaternion: must have non-zero length.")
+        return cls(value=format.to_wxyz(array / norm))
+
+    def components(self, format: QuaternionFormat) -> FloatArray:
+        """
+        Return the components with shape (4,) in the given order.
+
+        Parameters
+        ----------
+        format : QuaternionFormat
+            Order of the returned components.
+        """
+        return format.from_wxyz(self.value)
+
+    @property
+    def wxyz(self) -> FloatArray:
+        """Return the components in scalar-first order."""
+        return self.value
+
+    @property
+    def xyzw(self) -> FloatArray:
+        """Return the components in scalar-last order."""
+        return QuaternionFormat.XYZW.from_wxyz(self.value)
+
+    @property
+    def scalar_part(self) -> float:
+        """Return the scalar component ``w``, the cosine of half the angle."""
+        return cast(float, self.value[0])
+
+    @property
+    def vector_part(self) -> FloatArray:
+        """Return ``[x, y, z]``, the axis scaled by the sine of half the angle."""
+        return self.value[1:]
+
+    def canonical(self) -> Self:
+        """
+        Return the quaternion of the same rotation with a non-negative scalar part.
+
+        When the scalar part is zero, the first non-zero component is made positive,
+        so every rotation has exactly one canonical quaternion.
+        """
+        return type(self)(
+            value=self._rotation.as_quat(canonical=True, scalar_first=True)
+        )
+
+    def _to_scipy(self) -> Rotation:
+        return Rotation.from_quat(np.array(self.value), scalar_first=True)
+
+    @classmethod
+    def _from_scipy(cls, rotation: Rotation) -> Self:
+        return cls(value=rotation.as_quat(scalar_first=True))
+
+    @staticmethod
+    def _as_components(value: npt.ArrayLike) -> FloatArray:
+        components = np.asarray(value, dtype=np.float64)
+        if components.shape != (4,):
+            raise ValueError(
+                f"Invalid quaternion: must be a shape (4,) array, got shape {components.shape}."
+            )
+        return components

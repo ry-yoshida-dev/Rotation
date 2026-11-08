@@ -2,15 +2,13 @@
 
 ## Overview
 
-Rotation vectors (axis–angle): the direction is the rotation axis and the length is the angle in radians.
+Rotations stored as rotation vectors (axis–angle): the direction is the rotation axis and the length is the angle in radians.
 
 ## Components
 
 | Component | Description |
 |-----------|-------------|
-| [container.py](./container.py) | `RotationVector`, the rotation vector container. |
-| [protocol.py](./protocol.py) | Structural type that lets the mixins return the concrete subclass. |
-| [mixin](./mixin/README.md) | Factories shared by rotation vector containers. |
+| [single.py](./single.py) | `RotationVector`, one rotation vector. |
 
 ## Examples
 
@@ -19,7 +17,7 @@ import numpy as np
 
 from rotation.vector import RotationVector
 
-vector = RotationVector.from_axis_angle(axis=np.array([1.0, 0.0, 0.0]), angle=np.pi / 4)
+vector = RotationVector.from_axis_angle(axis=[1.0, 0.0, 0.0], angle=np.pi / 4)
 print(vector.angle)  # 0.785398...
-print(RotationVector.from_matrix(vector.rotation_matrix).value)
+print(vector.axis)  # [1.0, 0.0, 0.0]
 ```

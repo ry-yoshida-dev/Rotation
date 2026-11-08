@@ -5,19 +5,22 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rotation.matrix import RotationMatrix
-from rotation.vector import RotationVector
+from rotation import RotationMatrix
 
 
 class TestRotationMatrixValidation:
-    def test_unit_matrix_is_identity(self) -> None:
+    def test_converts_to_readonly_float64(
+        self, rotation_z_90_matrix: np.ndarray
+    ) -> None:
         """
-        Verify unit_matrix returns the identity.
+        Verify single-precision input is stored as a read-only float64 array.
 
-        Output: 3×3 identity ndarray.
+        Input: 90° Z rotation as float32.
+        Output: stored float64 array that cannot be written.
         """
-        rotation_matrix = RotationMatrix.unit_matrix()
-        np.testing.assert_allclose(rotation_matrix.value, np.eye(3))
+        rotation = RotationMatrix(value=rotation_z_90_matrix.astype(np.float32))
+        assert rotation.value.dtype == np.float64
+        assert not rotation.value.flags.writeable
 
     def test_rejects_invalid_shape(self) -> None:
         """
@@ -27,28 +30,20 @@ class TestRotationMatrixValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="shape"):
-            _ = RotationMatrix(value=np.eye(2, dtype=np.float64))
+            _ = RotationMatrix(value=np.eye(2))
 
     def test_rejects_non_orthogonal_matrix(self) -> None:
         """
         Verify non-orthogonal arrays are rejected.
 
-        Input: arbitrary non-orthogonal 3×3 array.
+        Input: shear matrix.
         Output: ValueError.
         """
+        shear = np.array([[1.0, 2.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
         with pytest.raises(ValueError, match="orthogonal"):
-            _ = RotationMatrix(
-                value=np.array(
-                    [
-                        [1.0, 2.0, 0.0],
-                        [0.0, 1.0, 0.0],
-                        [0.0, 0.0, 1.0],
-                    ],
-                    dtype=np.float64,
-                )
-            )
+            _ = RotationMatrix(value=shear)
 
-    def test_rejects_wrong_determinant(self) -> None:
+    def test_rejects_reflection(self) -> None:
         """
         Verify reflection matrices are rejected.
 
@@ -56,119 +51,80 @@ class TestRotationMatrixValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="determinant"):
-            _ = RotationMatrix(value=np.diag([1.0, 1.0, -1.0]).astype(np.float64))
+            _ = RotationMatrix(value=np.diag([1.0, 1.0, -1.0]))
 
 
 class TestRotationMatrixFactories:
-    def test_from_approximate_matrix_with_svd(
-        self,
-        rotation_z_90_matrix: np.ndarray,
+    def test_from_approximate_matrix_by_svd(
+        self, rotation_z_90_matrix: np.ndarray
     ) -> None:
         """
-        Verify SVD projection recovers a valid rotation matrix.
+        Verify SVD projection recovers a valid rotation close to the input.
 
         Input: noisy 90° Z rotation.
         Output: matrix close to the clean rotation.
         """
-        noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(0).standard_normal(
-            (3, 3)
+        noise = 1e-3 * np.random.default_rng(0).standard_normal((3, 3))
+        fitted = RotationMatrix.from_approximate_matrix_by_svd(
+            rotation_z_90_matrix + noise
         )
-        fitted = RotationMatrix.from_approximate_matrix_by_svd(noisy)
         np.testing.assert_allclose(fitted.value, rotation_z_90_matrix, atol=1e-2)
 
-    def test_from_approximate_matrix_by_qr(
-        self,
-        rotation_z_90_matrix: np.ndarray,
+    def test_from_approximate_matrix_by_svd_fixes_reflection(self) -> None:
+        """
+        Verify SVD projection of a reflection returns a proper rotation.
+
+        Input: reflection through the XY plane.
+        Output: matrix with determinant +1.
+        """
+        fitted = RotationMatrix.from_approximate_matrix_by_svd(
+            np.diag([1.0, 1.0, -1.0])
+        )
+        assert np.linalg.det(fitted.value) == pytest.approx(1.0)
+
+    def test_from_approximate_matrix_by_qr_keeps_first_column(
+        self, rotation_z_90_matrix: np.ndarray
     ) -> None:
         """
-        Verify QR projection returns a valid SO(3) rotation matrix.
+        Verify QR projection keeps the direction of the first column.
 
         Input: noisy 90° Z rotation.
-        Output: orthogonal 3×3 matrix with determinant +1.
+        Output: first column parallel to the input's first column.
         """
         noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(1).standard_normal(
             (3, 3)
         )
         fitted = RotationMatrix.from_approximate_matrix_by_qr(noisy)
-        assert fitted.is_orthogonal
-        assert fitted.is_determinant_correct
-        assert fitted.value.shape == (3, 3)
+        expected = noisy[:, 0] / np.linalg.norm(noisy[:, 0])
+        np.testing.assert_allclose(fitted.x_axis, expected, atol=1e-12)
 
-
-class TestRotationMatrixOperations:
-    def test_matmul_composes_rotations(
-        self,
-        rotation_z_90_matrix: np.ndarray,
-    ) -> None:
+    @pytest.mark.parametrize(
+        "factory",
+        [
+            RotationMatrix.from_approximate_matrix_by_svd,
+            RotationMatrix.from_approximate_matrix_by_qr,
+        ],
+    )
+    def test_approximate_factories_reject_invalid_shape(self, factory: object) -> None:
         """
-        Verify matrix multiplication composes two rotations.
+        Verify the projections reject non-(3, 3) input.
 
-        Input: 90° Z rotation composed with itself.
-        Output: 180° Z rotation.
+        Output: ValueError.
         """
-        rotation_a = RotationMatrix(value=rotation_z_90_matrix)
-        rotation_b = RotationMatrix(value=rotation_z_90_matrix)
-        composed = rotation_a @ rotation_b
-        expected = np.array(
-            [
-                [-1.0, 0.0, 0.0],
-                [0.0, -1.0, 0.0],
-                [0.0, 0.0, 1.0],
-            ],
-            dtype=np.float64,
-        )
-        np.testing.assert_allclose(composed.value, expected, atol=1e-6)
+        assert callable(factory)
+        with pytest.raises(ValueError, match="shape"):
+            _ = factory(np.eye(2))
 
-    def test_axes_match_columns(
-        self,
-        rotation_z_90_matrix: np.ndarray,
-    ) -> None:
+
+class TestRotationMatrixAxes:
+    def test_axes_match_columns(self, rotation_z_90_matrix: np.ndarray) -> None:
         """
-        Verify axis accessors return matrix columns.
+        Verify axis accessors return the matrix columns.
 
         Input: 90° Z rotation.
-        Output: x/y/z axes equal respective columns.
+        Output: x/y/z axes equal the respective columns.
         """
-        rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
-        np.testing.assert_allclose(rotation_matrix.x_axis, rotation_matrix.value[:, 0])
-        np.testing.assert_allclose(rotation_matrix.y_axis, rotation_matrix.value[:, 1])
-        np.testing.assert_allclose(rotation_matrix.z_axis, rotation_matrix.value[:, 2])
-
-    def test_transpose_and_inverse_match(
-        self,
-        rotation_z_90_matrix: np.ndarray,
-    ) -> None:
-        """
-        Verify transpose and inverse agree for rotation matrices.
-
-        Input: 90° Z rotation.
-        Output: T and inv are equal and orthogonal.
-        """
-        rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
-        np.testing.assert_allclose(
-            rotation_matrix.T, rotation_matrix.inverse, atol=1e-6
-        )
-        np.testing.assert_allclose(
-            rotation_matrix.T @ rotation_matrix.value,
-            np.eye(3),
-            atol=1e-6,
-        )
-
-    def test_rotation_vector_roundtrip(
-        self,
-        rotation_z_90_matrix: np.ndarray,
-    ) -> None:
-        """
-        Verify rotation_vector recovers an equivalent axis–angle vector.
-
-        Input: 90° Z rotation matrix.
-        Output: vector whose Rodrigues matrix matches the input.
-        """
-        rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
-        vector = rotation_matrix.rotation_vector
-        np.testing.assert_allclose(vector, [0.0, 0.0, np.pi / 2.0], atol=1e-6)
-        np.testing.assert_allclose(
-            RotationVector(value=vector).rotation_matrix,
-            rotation_z_90_matrix,
-            atol=1e-6,
-        )
+        rotation = RotationMatrix(value=rotation_z_90_matrix)
+        np.testing.assert_allclose(rotation.x_axis, [0.0, 1.0, 0.0])
+        np.testing.assert_allclose(rotation.y_axis, [-1.0, 0.0, 0.0])
+        np.testing.assert_allclose(rotation.z_axis, [0.0, 0.0, 1.0])

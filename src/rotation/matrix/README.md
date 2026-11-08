@@ -2,15 +2,14 @@
 
 ## Overview
 
-3×3 rotation matrices in SO(3). Construction rejects matrices that are not orthogonal or whose determinant is not +1, and composition with `@` returns a new instance of the same class.
+Rotations stored as 3×3 matrices in SO(3), in the column-vector convention `v_new = R @ v`. Construction rejects matrices that are not orthogonal or whose determinant is not +1.
 
 ## Components
 
 | Component | Description |
 |-----------|-------------|
-| [container.py](./container.py) | `RotationMatrix`, the rotation matrix container. |
-| [protocol.py](./protocol.py) | Structural type that lets the mixins return the concrete subclass. |
-| [mixin](./mixin/README.md) | Axis accessors, factories, and composition shared by rotation matrix containers. |
+| [single.py](./single.py) | `RotationMatrix`, one rotation matrix. |
+| [special_orthogonal.py](./special_orthogonal.py) | Validation of matrices and projection of approximate ones onto SO(3) by SVD or QR. |
 
 ## Examples
 
@@ -21,6 +20,5 @@ from rotation.matrix import RotationMatrix
 
 noisy = np.eye(3) + 1e-3 * np.random.default_rng(0).standard_normal((3, 3))
 fitted = RotationMatrix.from_approximate_matrix_by_svd(noisy)
-composed = fitted @ RotationMatrix.unit_matrix()
-print(composed.z_axis)
+print(fitted.z_axis)
 ```

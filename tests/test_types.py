@@ -1,57 +1,34 @@
-"""Tests for rotation numeric array type aliases."""
+"""Tests for the stored arrays of each container."""
 
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
-from rotation.matrix import RotationMatrix
-from rotation.quaternion import Quaternion, QuaternionFormat
-from rotation.types import FloatArray
-from rotation.vector import RotationVector
+from rotation import Quaternion, RotationMatrix, RotationVector, SingleRotation
 
 
-class TestFloatArray:
-    def test_accepts_floating_ndarray(self) -> None:
-        """
-        Verify FloatArray accepts floating-point ndarrays.
+@pytest.mark.parametrize("representation", [RotationMatrix, RotationVector, Quaternion])
+def test_value_is_readonly_float64(representation: type[SingleRotation]) -> None:
+    """
+    Verify every container stores a read-only float64 array.
 
-        Input: float64 vector.
-        Output: assignment succeeds and dtype remains floating.
-        """
-        array: FloatArray = np.array([1.0, 2.0, 3.0], dtype=np.float64)
-        assert np.issubdtype(array.dtype, np.floating)
+    Input: identity of each representation.
+    Output: float64 dtype and writeable flag disabled.
+    """
+    rotation = representation.identity()
+    value = rotation.value
+    assert value.dtype == np.float64
+    assert not value.flags.writeable
 
-    def test_rotation_matrix_value_is_floating(
-        self, identity_matrix: np.ndarray
-    ) -> None:
-        """
-        Verify RotationMatrix.value is a floating ndarray.
 
-        Input: identity matrix fixture.
-        Output: value dtype is floating.
-        """
-        rotation_matrix = RotationMatrix(value=identity_matrix)
-        assert np.issubdtype(rotation_matrix.value.dtype, np.floating)
+def test_value_is_copied() -> None:
+    """
+    Verify mutating the input array does not change the container.
 
-    def test_rotation_vector_value_is_floating(self) -> None:
-        """
-        Verify RotationVector.value is a floating ndarray.
-
-        Input: zero rotation vector.
-        Output: value dtype is floating.
-        """
-        rotation_vector = RotationVector(value=np.zeros(3, dtype=np.float64))
-        assert np.issubdtype(rotation_vector.value.dtype, np.floating)
-
-    def test_quaternion_value_is_floating(self) -> None:
-        """
-        Verify Quaternion.value is a floating ndarray.
-
-        Input: unit quaternion in WXYZ layout.
-        Output: value dtype is floating.
-        """
-        quaternion = Quaternion(
-            value=np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64),
-            format=QuaternionFormat.WXYZ,
-        )
-        assert np.issubdtype(quaternion.value.dtype, np.floating)
+    Output: stored value keeps the original components.
+    """
+    source = np.zeros(3)
+    rotation = RotationVector(value=source)
+    source[0] = 1.0
+    np.testing.assert_allclose(rotation.value, np.zeros(3))

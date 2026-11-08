@@ -1,7 +1,5 @@
-from .container import RotationVector
-from .protocol import RotationVectorLike
+from .single import RotationVector
 
 __all__ = [
     "RotationVector",
-    "RotationVectorLike",
 ]

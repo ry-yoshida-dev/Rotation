@@ -8,7 +8,7 @@ version = "0.0.1"
 authors = [
   { name = "Ryuto Yoshida" },
 ]
-description = "Utilities for representing 3D rotations: validated rotation matrices, rotation vectors (axis-angle), and quaternions with configurable layout."
+description = "3D rotations in SO(3): rotation matrices, rotation vectors, and unit quaternions that convert into each other and share composition, inverse, powers, and comparison."
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
@@ -57,6 +57,8 @@ strict = true
 
 [tool.basedpyright]
 include = ["src", "tests"]
+# typing.override needs Python 3.12, and the package supports 3.11 without typing_extensions.
+reportImplicitOverride = false
 
 [tool.ruff]
 target-version = "py311"
