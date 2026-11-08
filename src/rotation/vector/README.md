@@ -10,6 +10,7 @@ Rotations stored as rotation vectors (axis–angle): the direction is the rotati
 |-----------|-------------|
 | [single.py](./single.py) | `RotationVector`, one rotation vector. |
 | [batch.py](./batch.py) | `RotationVectors`, N rotation vectors. |
+| [protocol.py](./protocol.py) | Structural type of rotation vector containers. |
 | [skew_symmetric.py](./skew_symmetric.py) | Hat and vee maps between vectors and skew-symmetric matrices. |
 
 ## Examples

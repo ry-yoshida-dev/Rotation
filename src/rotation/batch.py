@@ -25,10 +25,13 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
     the single rotation, and indexing with a slice or an array returns a batch.
     """
 
-    @classmethod
     @abstractmethod
-    def _single_type(cls) -> type[_SingleRotationT]:
-        """Return the class of one element of the batch."""
+    def _with_value(self, value: FloatArray) -> Self:
+        """Create a batch like this one, such as with the same format, storing ``value``."""
+
+    @abstractmethod
+    def _single_with_value(self, value: FloatArray) -> _SingleRotationT:
+        """Create one element like this batch's, such as with the same format, storing ``value``."""
 
     @classmethod
     def from_rotation(cls, rotations: BatchRotation[SingleRotation]) -> Self:
@@ -124,13 +127,16 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
         if len(self) == 0:
             raise ValueError("The mean of an empty batch is undefined.")
         weight_array = self._as_weights(weights, len(self))
-        return self._single_type()._from_scipy(
-            self._rotation.mean(weights=weight_array)
-        )
+        # Each batch class stores a single internal rotation as a batch of one.
+        return self._with_rotation(self._rotation.mean(weights=weight_array))[0]
 
     @property
     def angles(self) -> FloatArray:
-        """Return the rotation angle of each rotation in radians, in [0, π], with shape (N,)."""
+        """
+        Return the rotation angle of each rotation in radians, in [0, π], with shape (N,).
+
+        ``RotationVectors`` returns its stored lengths instead, which may exceed π.
+        """
         return np.asarray(self._rotation.magnitude(), dtype=np.float64)
 
     def angles_to(
@@ -198,11 +204,11 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
             If ``other`` is a batch of a different length.
         """
         self._check_pairable(other)
-        return self._from_scipy(self._rotation * other._rotation)
+        return self._with_rotation(self._rotation * other._rotation)
 
     def __rmatmul__(self, other: SingleRotation) -> Self:
         """Return the compositions that apply each rotation first and then ``other``."""
-        return self._from_scipy(other._rotation * self._rotation)
+        return self._with_rotation(other._rotation * self._rotation)
 
     def __len__(self) -> int:
         """Return the number of rotations."""
@@ -219,15 +225,14 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
     ) -> _SingleRotationT | Self:
         """Return one rotation for an integer, and a batch for a slice or an array."""
         if isinstance(index, slice | np.ndarray):
-            return type(self)(value=self.value[index])
+            return self._with_value(self.value[index])
         # NumPy types integer indexing as Any, since the result shape is not tracked.
-        return self._single_type()(value=cast(FloatArray, self.value[index]))
+        return self._single_with_value(cast(FloatArray, self.value[index]))
 
     def __iter__(self) -> Iterator[_SingleRotationT]:
         """Iterate over the rotations one by one."""
-        single_type = self._single_type()
         for index in range(len(self)):
-            yield single_type(value=cast(FloatArray, self.value[index]))
+            yield self._single_with_value(cast(FloatArray, self.value[index]))
 
     def _check_pairable(
         self, other: SingleRotation | BatchRotation[SingleRotation]

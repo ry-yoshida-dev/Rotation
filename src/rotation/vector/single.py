@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
+from ..matrix import RotationMatrix
 from ..single import SingleRotation
 from ..types import FloatArray
 from ..utils import to_readonly_array
@@ -46,6 +47,33 @@ class RotationVector(SingleRotation):
         if not np.all(np.isfinite(vector)):
             raise ValueError("Invalid rotation vector: must be finite.")
         object.__setattr__(self, "value", to_readonly_array(vector))
+
+    @classmethod
+    def from_matrix(cls, rotation_matrix: npt.ArrayLike) -> Self:
+        """
+        Create a rotation vector from a rotation matrix.
+
+        Parameters
+        ----------
+        rotation_matrix : array_like
+            Rotation matrix with shape (3, 3) in SO(3).
+
+        Returns
+        -------
+        RotationVector
+            Rotation vector whose angle lies in [0, π].
+
+        Raises
+        ------
+        ValueError
+            If ``rotation_matrix`` is not a proper rotation matrix with shape (3, 3).
+        """
+        return cls.from_rotation(RotationMatrix(value=np.asarray(rotation_matrix)))
+
+    @classmethod
+    def zero_vector(cls) -> Self:
+        """Create the identity rotation, the zero vector."""
+        return cls.identity()
 
     @classmethod
     def from_axis_angle(cls, axis: npt.ArrayLike, angle: float) -> Self:
@@ -106,11 +134,11 @@ class RotationVector(SingleRotation):
         return SkewSymmetricMatrix.from_vectors(self.value)
 
     @property
-    def length(self) -> float:
+    def angle(self) -> float:
         """
-        Return the length of the stored vector in radians.
+        Return the rotation angle in radians, the length of the stored vector.
 
-        Unlike ``angle``, it is not reduced to [0, π].
+        Unlike other representations, it is not reduced to [0, π].
         """
         return float(np.linalg.norm(self.value))
 
@@ -124,10 +152,15 @@ class RotationVector(SingleRotation):
         ValueError
             If the vector has zero length, so that the axis is undefined.
         """
-        length = self.length
+        length = self.angle
         if np.isclose(length, 0.0):
             raise ValueError("The axis of the identity rotation is undefined.")
         return self.value / length
+
+    @property
+    def rotation_vector(self) -> FloatArray:
+        """Return the stored vector with shape (3,), whose length is not reduced to [0, π]."""
+        return self.value
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_rotvec(np.array(self.value))

@@ -128,3 +128,45 @@ class TestRotationMatrixAxes:
         np.testing.assert_allclose(rotation.x_axis, [0.0, 1.0, 0.0])
         np.testing.assert_allclose(rotation.y_axis, [-1.0, 0.0, 0.0])
         np.testing.assert_allclose(rotation.z_axis, [0.0, 0.0, 1.0])
+
+
+class TestRotationMatrixConveniences:
+    def test_unit_matrix_is_identity(self) -> None:
+        """
+        Verify unit_matrix returns the identity.
+
+        Output: 3×3 identity.
+        """
+        np.testing.assert_array_equal(RotationMatrix.unit_matrix().value, np.eye(3))
+
+    def test_transpose_is_inverse_matrix(
+        self, rotation_z_90_matrix: np.ndarray
+    ) -> None:
+        """
+        Verify T is the transpose, which equals the matrix of the inverse.
+
+        Output: T equals inverse.value.
+        """
+        rotation = RotationMatrix(value=rotation_z_90_matrix)
+        np.testing.assert_array_equal(rotation.T, rotation_z_90_matrix.T)
+        np.testing.assert_allclose(rotation.T, rotation.inverse.value, atol=1e-12)
+
+    def test_validity_flags(self, rotation_z_90_matrix: np.ndarray) -> None:
+        """
+        Verify the validity flags of a stored matrix.
+
+        Output: True for both.
+        """
+        rotation = RotationMatrix(value=rotation_z_90_matrix)
+        assert rotation.is_orthogonal
+        assert rotation.is_determinant_correct
+
+    def test_validate_rotation_matrix_array(self) -> None:
+        """
+        Verify the array validator accepts rotations and rejects reflections.
+
+        Output: no error, then ValueError.
+        """
+        RotationMatrix.validate_rotation_matrix_array(np.eye(3))
+        with pytest.raises(ValueError, match="determinant"):
+            RotationMatrix.validate_rotation_matrix_array(np.diag([1.0, 1.0, -1.0]))

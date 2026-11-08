@@ -162,7 +162,10 @@ class TestMean:
         Output: the mean of q and -q is q.
         """
         quaternion = Quaternion.random(np.random.default_rng(3))
-        batch = Quaternions(value=np.stack([quaternion.value, -quaternion.value]))
+        batch = Quaternions(
+            value=np.stack([quaternion.value, -quaternion.value]),
+            format=quaternion.format,
+        )
         assert batch.mean().is_close(quaternion)
 
     def test_rejects_empty_batch(self) -> None:

@@ -102,7 +102,11 @@ class SingleRotation(RotationRepresentation, ABC):
 
     @property
     def angle(self) -> float:
-        """Return the rotation angle in radians, in [0, π]."""
+        """
+        Return the rotation angle in radians, in [0, π].
+
+        ``RotationVector`` returns its stored length instead, which may exceed π.
+        """
         return float(self._rotation.magnitude())
 
     def angle_to(self, other: SingleRotation) -> float:
@@ -143,4 +147,4 @@ class SingleRotation(RotationRepresentation, ABC):
         if not other._rotation.single:
             # Let a batch on the right broadcast this rotation through its __rmatmul__.
             return NotImplemented
-        return self._from_scipy(self._rotation * other._rotation)
+        return self._with_rotation(self._rotation * other._rotation)

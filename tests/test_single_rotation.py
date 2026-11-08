@@ -5,7 +5,13 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from rotation import Quaternion, RotationMatrix, RotationVector, SingleRotation
+from rotation import (
+    Quaternion,
+    QuaternionFormat,
+    RotationMatrix,
+    RotationVector,
+    SingleRotation,
+)
 
 REPRESENTATIONS: list[type[SingleRotation]] = [
     RotationMatrix,
@@ -76,12 +82,12 @@ class TestSingleRotationAcrossRepresentations:
         self, representation: type[SingleRotation], rotation_z_90: RotationMatrix
     ) -> None:
         """
-        Verify r.inverse() @ r is the identity.
+        Verify r.inverse @ r is the identity.
 
         Output: identity within tolerance.
         """
         rotation = representation.from_rotation(rotation_z_90)
-        assert (rotation.inverse() @ rotation).is_close(RotationMatrix.identity())
+        assert (rotation.inverse @ rotation).is_close(RotationMatrix.identity())
 
     def test_power_scales_angle(
         self, representation: type[SingleRotation], rotation_z_90: RotationMatrix
@@ -154,4 +160,6 @@ class TestSingleRotationComparison:
         Output: True.
         """
         components = np.array([0.5, 0.5, 0.5, 0.5])
-        assert Quaternion(value=components).is_close(Quaternion(value=-components))
+        positive = Quaternion(value=components, format=QuaternionFormat.WXYZ)
+        negative = Quaternion(value=-components, format=QuaternionFormat.WXYZ)
+        assert positive.is_close(negative)

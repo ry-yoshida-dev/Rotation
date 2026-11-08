@@ -108,11 +108,11 @@ class RotationVectors(BatchRotation[RotationVector]):
         return SkewSymmetricMatrix.from_vectors(self.value)
 
     @property
-    def lengths(self) -> FloatArray:
+    def angles(self) -> FloatArray:
         """
-        Return the length of each stored vector in radians, with shape (N,).
+        Return the rotation angles in radians, the lengths of the stored vectors, with shape (N,).
 
-        Unlike ``angles``, they are not reduced to [0, π].
+        Unlike other representations, they are not reduced to [0, π].
         """
         return np.linalg.norm(self.value, axis=1)
 
@@ -126,14 +126,21 @@ class RotationVectors(BatchRotation[RotationVector]):
         ValueError
             If a vector has zero length, so that its axis is undefined.
         """
-        lengths = self.lengths
+        lengths = self.angles
         if np.any(np.isclose(lengths, 0.0)):
             raise ValueError("The axis of the identity rotation is undefined.")
         return self.value / lengths[:, np.newaxis]
 
-    @classmethod
-    def _single_type(cls) -> type[RotationVector]:
-        return RotationVector
+    def _with_value(self, value: FloatArray) -> Self:
+        return type(self)(value=value)
+
+    def _single_with_value(self, value: FloatArray) -> RotationVector:
+        return RotationVector(value=value)
+
+    @property
+    def rotation_vector(self) -> FloatArray:
+        """Return the stored vectors with shape (N, 3), whose lengths are not reduced to [0, π]."""
+        return self.value
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_rotvec(np.array(self.value).reshape(-1, 3))

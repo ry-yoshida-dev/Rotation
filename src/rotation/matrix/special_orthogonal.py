@@ -34,7 +34,7 @@ class SpecialOrthogonalMatrix:
         gram = np.swapaxes(matrices, -1, -2) @ matrices
         if not np.allclose(gram, identity, atol=atol):
             raise ValueError("Invalid rotation matrix: must be orthogonal.")
-        determinants = SpecialOrthogonalMatrix._determinants(matrices)
+        determinants = SpecialOrthogonalMatrix.determinants(matrices)
         if not np.allclose(determinants, 1.0, atol=atol):
             raise ValueError(
                 f"Invalid rotation matrix: must have determinant +1, got {determinants}."
@@ -54,7 +54,7 @@ class SpecialOrthogonalMatrix:
         left: FloatArray = decomposition.U
         right: FloatArray = decomposition.Vh
         # Flip the last singular direction where needed to turn a reflection into a rotation.
-        signs = np.sign(SpecialOrthogonalMatrix._determinants(left @ right))
+        signs = np.sign(SpecialOrthogonalMatrix.determinants(left @ right))
         left[..., :, -1] *= signs[..., np.newaxis]
         return left @ right
 
@@ -78,11 +78,24 @@ class SpecialOrthogonalMatrix:
         diagonal_signs = np.sign(np.diagonal(upper, axis1=-2, axis2=-1))
         diagonal_signs[diagonal_signs == 0] = 1.0
         orthogonal = orthogonal * diagonal_signs[..., np.newaxis, :]
-        signs = np.sign(SpecialOrthogonalMatrix._determinants(orthogonal))
+        signs = np.sign(SpecialOrthogonalMatrix.determinants(orthogonal))
         orthogonal[..., :, -1] *= signs[..., np.newaxis]
         return orthogonal
 
     @staticmethod
-    def _determinants(matrices: FloatArray) -> FloatArray:
+    def determinants(matrices: FloatArray) -> FloatArray:
+        """
+        Return the determinant of each matrix.
+
+        Parameters
+        ----------
+        matrices : FloatArray
+            Matrices with shape (..., 3, 3).
+
+        Returns
+        -------
+        FloatArray
+            Determinants with shape (...).
+        """
         # NumPy types the result as Any unless the array shape is known statically.
         return cast(FloatArray, np.linalg.det(matrices))

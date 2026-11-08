@@ -2,7 +2,7 @@
 
 ## Overview
 
-Rotations stored as unit quaternions in scalar-first order `[w, x, y, z]`. Other component orders are accepted and returned through `QuaternionFormat`.
+Rotations stored as unit quaternions in the component order of their `QuaternionFormat`, scalar first or scalar last. Operations keep the format of the quaternion they are called on.
 
 ## Components
 
@@ -15,9 +15,14 @@ Rotations stored as unit quaternions in scalar-first order `[w, x, y, z]`. Other
 ## Examples
 
 ```python
+import numpy as np
+
 from rotation.quaternion import Quaternion, QuaternionFormat
 
-quaternion = Quaternion.from_components([0.0, 0.0, 0.0, -1.0], QuaternionFormat.XYZW)
+quaternion = Quaternion(
+    value=np.array([0.0, 0.0, 0.0, -1.0]), format=QuaternionFormat.XYZW
+)
 print(quaternion.wxyz)  # [-1.0, 0.0, 0.0, 0.0]
-print(quaternion.canonical().wxyz)  # [1.0, 0.0, 0.0, 0.0]
+print(quaternion.canonical().value)  # [0.0, 0.0, 0.0, 1.0], still scalar last
+print(quaternion.with_format(QuaternionFormat.WXYZ).value)  # [-1.0, 0.0, 0.0, 0.0]
 ```

@@ -42,6 +42,37 @@ class RotationMatrix(SingleRotation):
         object.__setattr__(self, "value", to_readonly_array(matrix))
 
     @classmethod
+    def unit_matrix(cls) -> Self:
+        """Create the identity rotation matrix."""
+        return cls.identity()
+
+    @staticmethod
+    def validate_rotation_matrix_array(
+        value: npt.ArrayLike,
+        *,
+        atol: float = 1e-6,
+    ) -> None:
+        """
+        Check that ``value`` is a proper rotation matrix in SO(3).
+
+        Parameters
+        ----------
+        value : array_like
+            Matrix to check.
+        atol : float, default 1e-6
+            Absolute tolerance of the orthogonality and determinant checks.
+
+        Raises
+        ------
+        ValueError
+            If ``value`` does not have shape (3, 3), is not orthogonal, or does not
+            have determinant +1.
+        """
+        SpecialOrthogonalMatrix.validate(
+            RotationMatrix._as_square_matrix(value), atol=atol
+        )
+
+    @classmethod
     def from_approximate_matrix_by_svd(cls, value: npt.ArrayLike) -> Self:
         """
         Create the rotation matrix closest to an approximate one in the Frobenius norm.
@@ -81,6 +112,22 @@ class RotationMatrix(SingleRotation):
         return cls(value=SpecialOrthogonalMatrix.project_by_qr(matrix))
 
     @property
+    def is_orthogonal(self) -> bool:
+        """Return whether the matrix is orthogonal within an absolute tolerance of 1e-6."""
+        return bool(np.allclose(self.value.T @ self.value, np.eye(3), atol=1e-6))
+
+    @property
+    def is_determinant_correct(self) -> bool:
+        """Return whether the determinant is +1 within an absolute tolerance of 1e-6."""
+        determinants = SpecialOrthogonalMatrix.determinants(self.value)
+        return bool(np.isclose(determinants, 1.0, atol=1e-6))
+
+    @property
+    def T(self) -> FloatArray:
+        """Return the transpose of the matrix, which is the matrix of the inverse."""
+        return self.value.T
+
+    @property
     def x_axis(self) -> FloatArray:
         """Return the first column, the rotated x-axis, with shape (3,)."""
         return self.value[:, 0]
@@ -94,6 +141,11 @@ class RotationMatrix(SingleRotation):
     def z_axis(self) -> FloatArray:
         """Return the third column, the rotated z-axis, with shape (3,)."""
         return self.value[:, 2]
+
+    @property
+    def rotation_matrix(self) -> FloatArray:
+        """Return the stored matrix with shape (3, 3)."""
+        return self.value
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_matrix(np.array(self.value))

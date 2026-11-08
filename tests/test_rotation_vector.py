@@ -64,16 +64,40 @@ class TestRotationVectorFactories:
 
 
 class TestRotationVectorProperties:
-    def test_length_is_not_reduced(self) -> None:
+    def test_angle_is_stored_length(self) -> None:
         """
-        Verify length keeps the stored magnitude while angle is reduced to [0, π].
+        Verify angle is the stored length, not reduced to [0, π] like other representations.
 
         Input: 3π/2 about +Z.
-        Output: length 3π/2, angle π/2.
+        Output: angle 3π/2 for the vector, π/2 for the same rotation as a matrix.
         """
         rotation = RotationVector(value=np.array([0.0, 0.0, 1.5 * np.pi]))
-        assert rotation.length == pytest.approx(1.5 * np.pi)
-        assert rotation.angle == pytest.approx(0.5 * np.pi)
+        assert rotation.angle == pytest.approx(1.5 * np.pi)
+        assert RotationMatrix.from_rotation(rotation).angle == pytest.approx(
+            0.5 * np.pi
+        )
+
+    def test_from_matrix_and_zero_vector(
+        self, rotation_z_90_matrix: np.ndarray
+    ) -> None:
+        """
+        Verify the array factory and the zero vector.
+
+        Input: 90° Z rotation matrix as an array.
+        Output: π/2 about +Z, and a zero vector.
+        """
+        rotation = RotationVector.from_matrix(rotation_z_90_matrix)
+        np.testing.assert_allclose(rotation.value, [0.0, 0.0, np.pi / 2])
+        np.testing.assert_array_equal(RotationVector.zero_vector().value, np.zeros(3))
+
+    def test_from_matrix_rejects_reflection(self) -> None:
+        """
+        Verify from_matrix rejects matrices outside SO(3).
+
+        Output: ValueError.
+        """
+        with pytest.raises(ValueError, match="determinant"):
+            _ = RotationVector.from_matrix(np.diag([1.0, 1.0, -1.0]))
 
     def test_axis_is_unit(self) -> None:
         """

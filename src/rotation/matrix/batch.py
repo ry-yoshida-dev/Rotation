@@ -94,9 +94,16 @@ class RotationMatrices(BatchRotation[RotationMatrix]):
         """Return the third columns, the rotated z-axes, with shape (N, 3)."""
         return self.value[:, :, 2]
 
-    @classmethod
-    def _single_type(cls) -> type[RotationMatrix]:
-        return RotationMatrix
+    def _with_value(self, value: FloatArray) -> Self:
+        return type(self)(value=value)
+
+    def _single_with_value(self, value: FloatArray) -> RotationMatrix:
+        return RotationMatrix(value=value)
+
+    @property
+    def rotation_matrix(self) -> FloatArray:
+        """Return the stored matrices with shape (N, 3, 3)."""
+        return self.value
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_matrix(np.array(self.value).reshape(-1, 3, 3))

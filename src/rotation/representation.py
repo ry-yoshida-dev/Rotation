@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TYPE_CHECKING, Self
+from typing import Self
 
 import numpy as np
 import numpy.typing as npt
@@ -23,10 +23,6 @@ class RotationRepresentation(ABC):
     value: FloatArray
     """Stored array, whose shape and layout depend on the representation."""
 
-    if TYPE_CHECKING:
-        # Every concrete class is a dataclass whose only constructor argument is value.
-        def __init__(self, *, value: FloatArray) -> None: ...
-
     @abstractmethod
     def _to_scipy(self) -> Rotation:
         """Return the internal rotation equivalent to the stored array."""
@@ -40,9 +36,54 @@ class RotationRepresentation(ABC):
     def _rotation(self) -> Rotation:
         return self._to_scipy()
 
+    def _with_rotation(self, rotation: Rotation) -> Self:
+        """Create an instance like this one, such as with the same format, for ``rotation``."""
+        return self._from_scipy(rotation)
+
+    @property
+    def rotation_matrix(self) -> FloatArray:
+        """
+        Return the rotation as a matrix in the column-vector convention ``v_new = R @ v``.
+
+        The shape is (3, 3) for a single rotation and (N, 3, 3) for a batch.
+        """
+        return np.asarray(self._rotation.as_matrix(), dtype=np.float64)
+
+    @property
+    def rotation_vector(self) -> FloatArray:
+        """
+        Return the rotation as an axis scaled by the angle in radians.
+
+        The shape is (3,) for a single rotation and (N, 3) for a batch. Rotation
+        vectors return their stored value; other representations return the vector
+        whose length lies in [0, π].
+        """
+        return np.asarray(self._rotation.as_rotvec(), dtype=np.float64)
+
+    @property
+    def wxyz(self) -> FloatArray:
+        """
+        Return the rotation as unit quaternion components in scalar-first order.
+
+        The shape is (4,) for a single rotation and (N, 4) for a batch. Quaternions
+        return their stored value; other representations return either sign, since
+        ``q`` and ``-q`` are the same rotation.
+        """
+        return np.asarray(self._rotation.as_quat(scalar_first=True), dtype=np.float64)
+
+    @property
+    def xyzw(self) -> FloatArray:
+        """
+        Return the rotation as unit quaternion components in scalar-last order.
+
+        The shape is (4,) for a single rotation and (N, 4) for a batch.
+        """
+        return np.roll(self.wxyz, -1, axis=-1)
+
+    @property
     def inverse(self) -> Self:
-        """Return the inverse rotation, which undoes this one."""
-        return self._from_scipy(self._rotation.inv())
+        """Return the inverse rotation, which undoes this one, in the same representation."""
+        return self._with_rotation(self._rotation.inv())
 
     def __pow__(self, exponent: float) -> Self:
         """
@@ -50,9 +91,9 @@ class RotationRepresentation(ABC):
 
         The angle used is the one in [0, π], so ``r ** 0.5`` is the rotation halfway
         along the shortest path from the identity to ``r``. Integer exponents equal
-        repeated composition, and ``r ** -1`` equals ``r.inverse()``.
+        repeated composition, and ``r ** -1`` equals ``r.inverse``.
         """
-        return self._from_scipy(self._rotation ** float(exponent))
+        return self._with_rotation(self._rotation ** float(exponent))
 
     def apply(self, vectors: npt.ArrayLike) -> FloatArray:
         """

@@ -84,7 +84,7 @@ class TestBatchRotationAcrossRepresentations:
         """
         empty = representation.from_rotations([])
         assert len(empty) == 0
-        assert empty.inverse().angles.shape == (0,)
+        assert empty.inverse.angles.shape == (0,)
         assert empty.apply([1.0, 0.0, 0.0]).shape == (0, 3)
 
     def test_indexing(
@@ -167,7 +167,7 @@ class TestBatchRotationAcrossRepresentations:
         Output: identities and halved angles.
         """
         batch = representation.from_rotation(quarter_turns)
-        assert np.all((batch.inverse() @ batch).is_close(RotationMatrix.identity()))
+        assert np.all((batch.inverse @ batch).is_close(RotationMatrix.identity()))
         np.testing.assert_allclose((batch**0.5).angles, [np.pi / 4] * 3)
 
     def test_apply_pairs_vectors(
@@ -189,24 +189,20 @@ class TestBatchRotationAcrossRepresentations:
 
 
 class TestBatchRotationValidation:
-    @pytest.mark.parametrize(
-        ("representation", "value"),
-        [
-            (RotationMatrices, np.eye(3)),
-            (RotationVectors, np.zeros(3)),
-            (Quaternions, np.array([1.0, 0.0, 0.0, 0.0])),
-        ],
-    )
-    def test_rejects_single_shape(
-        self, representation: type[BatchRotation[SingleRotation]], value: np.ndarray
-    ) -> None:
+    def test_rejects_single_shape(self) -> None:
         """
         Verify a single rotation's array is not accepted as a batch.
 
-        Output: ValueError.
+        Output: ValueError for each representation.
         """
         with pytest.raises(ValueError, match="shape"):
-            _ = representation(value=value)
+            _ = RotationMatrices(value=np.eye(3))
+        with pytest.raises(ValueError, match="shape"):
+            _ = RotationVectors(value=np.zeros(3))
+        with pytest.raises(ValueError, match="shape"):
+            _ = Quaternions(
+                value=np.array([1.0, 0.0, 0.0, 0.0]), format=QuaternionFormat.WXYZ
+            )
 
     def test_rejects_any_invalid_matrix(self) -> None:
         """
@@ -225,7 +221,8 @@ class TestBatchRotationValidation:
         """
         with pytest.raises(ValueError, match="normalized"):
             _ = Quaternions(
-                value=np.array([[1.0, 0.0, 0.0, 0.0], [2.0, 0.0, 0.0, 0.0]])
+                value=np.array([[1.0, 0.0, 0.0, 0.0], [2.0, 0.0, 0.0, 0.0]]),
+                format=QuaternionFormat.WXYZ,
             )
 
 
@@ -268,7 +265,7 @@ class TestBatchSpecificAccessors:
             vectors.value, [[0.0, 0.0, np.pi / 2], [np.pi / 4, 0.0, 0.0]]
         )
         np.testing.assert_allclose(vectors.axes, [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]])
-        np.testing.assert_allclose(vectors.lengths, [np.pi / 2, np.pi / 4])
+        np.testing.assert_allclose(vectors.angles, [np.pi / 2, np.pi / 4])
 
     def test_vectors_from_axes_angles_rejects_mismatched_angles(self) -> None:
         """
@@ -285,12 +282,15 @@ class TestBatchSpecificAccessors:
 
         Output: scalar-first value and non-negative scalar parts.
         """
-        quaternions = Quaternions.from_components(
-            [[0.0, 0.0, 0.0, -1.0], [0.0, 0.0, 1.0, 0.0]], QuaternionFormat.XYZW
+        quaternions = Quaternions(
+            value=np.array([[0.0, 0.0, 0.0, -1.0], [0.0, 0.0, 1.0, 0.0]]),
+            format=QuaternionFormat.XYZW,
         )
         np.testing.assert_allclose(quaternions.scalar_parts, [-1.0, 0.0])
+        canonical = quaternions.canonical()
+        assert canonical.format is QuaternionFormat.XYZW
         np.testing.assert_allclose(
-            quaternions.canonical().wxyz, [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
+            canonical.wxyz, [[1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
         )
         np.testing.assert_allclose(
             quaternions.xyzw, [[0.0, 0.0, 0.0, -1.0], [0.0, 0.0, 1.0, 0.0]]
@@ -309,3 +309,55 @@ class TestBatchSpecificAccessors:
         batch = Quaternions.from_rotations(singles)
         assert batch[0].is_close(singles[0])
         assert batch[1].is_close(singles[1])
+
+
+class TestQuaternionsFormat:
+    def test_operations_keep_format(self) -> None:
+        """
+        Verify operations, indexing, iteration, and the mean keep the batch's format.
+
+        Input: random quaternions in scalar-last order.
+        Output: XYZW for every result.
+        """
+        quaternions = Quaternions.random(
+            3, np.random.default_rng(0), format=QuaternionFormat.XYZW
+        )
+        assert quaternions.format is QuaternionFormat.XYZW
+        results: list[Quaternion | Quaternions] = [
+            quaternions.inverse,
+            quaternions**0.5,
+            quaternions @ RotationMatrix.identity(),
+            RotationMatrix.identity() @ quaternions,
+            quaternions[1:],
+            quaternions[0],
+            quaternions.mean(),
+            *quaternions,
+        ]
+        assert all(result.format is QuaternionFormat.XYZW for result in results)
+
+    def test_with_format_reorders(self) -> None:
+        """
+        Verify with_format reorders the stored components.
+
+        Output: value rolled into scalar-first order.
+        """
+        quaternions = Quaternions(
+            value=np.array([[0.0, 0.0, 0.0, 1.0]]), format=QuaternionFormat.XYZW
+        )
+        reordered = quaternions.with_format(QuaternionFormat.WXYZ)
+        np.testing.assert_allclose(reordered.value, [[1.0, 0.0, 0.0, 0.0]])
+
+    def test_from_unnormalized_components(self) -> None:
+        """
+        Verify non-unit rows are normalized and zero rows are rejected.
+
+        Output: unit rows, then ValueError.
+        """
+        quaternions = Quaternions.from_unnormalized_components(
+            [[2.0, 0.0, 0.0, 0.0]], QuaternionFormat.WXYZ
+        )
+        np.testing.assert_allclose(quaternions.value, [[1.0, 0.0, 0.0, 0.0]])
+        with pytest.raises(ValueError, match="non-zero"):
+            _ = Quaternions.from_unnormalized_components(
+                np.zeros((1, 4)), QuaternionFormat.WXYZ
+            )
