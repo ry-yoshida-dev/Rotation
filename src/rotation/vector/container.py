@@ -47,4 +47,5 @@ class RotationVector(RotationVectorFactoryMixin):
     @property
     def rotation_matrix(self) -> FloatArray:
         """Return the 3×3 rotation matrix in the column-vector convention ``v_new = R @ v``."""
-        return Rotation.from_rotvec(self.value).as_matrix()
+        # SciPy's Cython routines reject read-only buffers on some builds, so pass a copy.
+        return Rotation.from_rotvec(np.array(self.value)).as_matrix()
