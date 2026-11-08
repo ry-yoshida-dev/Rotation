@@ -9,7 +9,7 @@ authors = [
   { name = "Ryuto Yoshida" },
 ]
 description = "Utilities for representing 3D rotations: validated rotation matrices, rotation vectors (axis-angle), and quaternions with configurable layout."
-readme = "src/rotation/README.md"
+readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",

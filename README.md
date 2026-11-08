@@ -2,55 +2,30 @@
 
 ## Overview
 
-`Rotation` is a Python package for working with 3D rotations.  
-It provides validated rotation matrices, rotation vectors (axis–angle), and quaternions (WXYZ / XYZW).
-
-Module layout, component index, and a package-level example: [src/rotation/README.md](src/rotation/README.md).
+`rotation` is a Python package for 3D rotations. It provides immutable, validated rotation matrices, rotation vectors (axis–angle), and quaternions in WXYZ or XYZW layout, with conversions between them. See [src/rotation/README.md](src/rotation/README.md) for package details.
 
 ## Installation
 
-Install dependencies only:
+From the project root:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
-From the repository root, add `src` to your Python path so the package can be imported:
-
-```bash
-export PYTHONPATH=src
-```
-
-## Example
+## Usage
 
 ```python
 import numpy as np
 
-from rotation import (
-    Quaternion,
-    QuaternionFormat,
-    RotationMatrix,
-    RotationVector,
-)
+from rotation import Quaternion, QuaternionFormat, RotationMatrix, RotationVector
 
-# Identity rotation matrix
-R0 = RotationMatrix.unit_matrix()
+vector = RotationVector.from_axis_angle(axis=np.array([0.0, 0.0, 1.0]), angle=np.pi / 2)
+matrix = RotationMatrix(value=vector.rotation_matrix)
+print(matrix.x_axis)  # [0.0, 1.0, 0.0]
 
-# Rotation vector (axis * angle, e.g. OpenCV rvec); convert to ndarray
-v = RotationVector(value=np.array([0.0, 0.0, np.pi / 4]))
-R1 = v.rotation_matrix
+composed = matrix @ matrix
+print(composed.rotation_vector)  # [0.0, 0.0, 3.14159265...]
 
-# Compose rotations (R1 is a raw 3×3 ndarray)
-R = RotationMatrix(value=R0.value @ R1)
-
-# Rotation vector from an explicit axis and angle
-w = RotationVector.from_axis_angle(axis=np.array([0.0, 0.0, 1.0]), angle=np.pi / 6)
-Rw = w.rotation_matrix
-
-# Quaternion (normalized), WXYZ layout
-q = Quaternion(
-    value=np.array([1.0, 0.0, 0.0, 0.0]),
-    format=QuaternionFormat.WXYZ,
-)
-R_from_q = q.rotation_matrix
+quaternion = Quaternion(value=np.array([1.0, 0.0, 0.0, 0.0]), format=QuaternionFormat.WXYZ)
+print(quaternion.xyzw)  # [0.0, 0.0, 0.0, 1.0]
 ```

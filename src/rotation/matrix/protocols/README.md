@@ -2,14 +2,12 @@
 
 ## Overview
 
-Structural typing protocols and factory narrowing helpers for rotation-matrix containers and their class constructors. Used by mixins to preserve static types when calling `cls(*, value=...)` or `type(self)(*, value=...)`.
+Structural types for rotation matrix containers and their classes, used by the mixins to keep the concrete subclass in their return types.
 
 ## Components
 
 | Component | Description |
 |-----------|-------------|
-| [like.py](./like.py) | `RotationMatrixLike` — structural protocol requiring a read-only `value: FloatArray` |
-| [matrix_type.py](./matrix_type.py) | `RotationMatrixType` — callable class protocol for `(*, value: ndarray) -> _R` |
-| [ctor.py](./ctor.py) | `rotation_matrix_ctor` — narrows `type[_R]` / `type(self)` to `RotationMatrixType[_R]` |
-
-See the matrix package [../README.md](../README.md) for context.
+| [like.py](./like.py) | Protocol for objects exposing a read-only rotation matrix `value`. |
+| [matrix_type.py](./matrix_type.py) | Protocol for classes constructed with a keyword `value`. |
+| [ctor.py](./ctor.py) | Narrows a container class to that constructor protocol. |
