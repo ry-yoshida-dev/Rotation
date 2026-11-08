@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self
 
 import numpy as np
@@ -94,9 +94,6 @@ class RotationMatrices(BatchRotation[RotationMatrix]):
         """Return the third columns, the rotated z-axes, with shape (N, 3)."""
         return self.value[:, :, 2]
 
-    def _with_value(self, value: FloatArray) -> Self:
-        return type(self)(value=value)
-
     def _single_with_value(self, value: FloatArray) -> RotationMatrix:
         return RotationMatrix(value=value)
 
@@ -104,6 +101,12 @@ class RotationMatrices(BatchRotation[RotationMatrix]):
     def rotation_matrix(self) -> FloatArray:
         """Return the stored matrices with shape (N, 3, 3)."""
         return self.value
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return rotation.as_matrix().reshape(-1, 3, 3)
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_matrix(np.array(self.value).reshape(-1, 3, 3))

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self
 
 import numpy as np
@@ -131,9 +131,6 @@ class RotationVectors(BatchRotation[RotationVector]):
             raise ValueError("The axis of the identity rotation is undefined.")
         return self.value / lengths[:, np.newaxis]
 
-    def _with_value(self, value: FloatArray) -> Self:
-        return type(self)(value=value)
-
     def _single_with_value(self, value: FloatArray) -> RotationVector:
         return RotationVector(value=value)
 
@@ -141,6 +138,12 @@ class RotationVectors(BatchRotation[RotationVector]):
     def rotation_vector(self) -> FloatArray:
         """Return the stored vectors with shape (N, 3), whose lengths are not reduced to [0, π]."""
         return self.value
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return rotation.as_rotvec().reshape(-1, 3)
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_rotvec(np.array(self.value).reshape(-1, 3))

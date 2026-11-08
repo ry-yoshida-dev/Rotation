@@ -10,6 +10,7 @@ Pytest suite for the `rotation` package.
 |-----------|-------------|
 | [conftest.py](./conftest.py) | Shared fixtures for the identity and a 90° rotation about +Z. |
 | [test_types.py](./test_types.py) | Tests for the stored arrays of each container. |
+| [test_subclass.py](./test_subclass.py) | Tests for subclasses that add fields to the containers. |
 | [test_array_accessors.py](./test_array_accessors.py) | Tests for the raw array accessors every representation shares. |
 | [test_single_rotation.py](./test_single_rotation.py) | Tests for the operations every single rotation shares. |
 | [test_batch_rotation.py](./test_batch_rotation.py) | Tests for the batch classes. |

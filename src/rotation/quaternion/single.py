@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self, cast
 
 import numpy as np
@@ -167,7 +167,7 @@ class Quaternion(SingleRotation):
         format : QuaternionFormat
             Order of the components of the result.
         """
-        return type(self)(value=format.from_wxyz(self.wxyz), format=format)
+        return replace(self, value=format.from_wxyz(self.wxyz), format=format)
 
     @property
     def is_scalar_first(self) -> bool:
@@ -202,7 +202,13 @@ class Quaternion(SingleRotation):
         so every rotation has exactly one canonical quaternion. The format is kept.
         """
         canonical = self._rotation.as_quat(canonical=True, scalar_first=True)
-        return type(self)(value=self.format.from_wxyz(canonical), format=self.format)
+        return self._with_value(self.format.from_wxyz(canonical))
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return self.format.from_wxyz(rotation.as_quat(scalar_first=True))
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_quat(np.array(self.wxyz), scalar_first=True)
@@ -212,9 +218,6 @@ class Quaternion(SingleRotation):
         return cls(
             value=rotation.as_quat(scalar_first=True), format=QuaternionFormat.WXYZ
         )
-
-    def _with_rotation(self, rotation: Rotation) -> Self:
-        return self._from_scipy(rotation).with_format(self.format)
 
     @staticmethod
     def _as_components(value: npt.ArrayLike) -> FloatArray:

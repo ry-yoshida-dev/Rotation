@@ -36,9 +36,18 @@ class RotationRepresentation(ABC):
     def _rotation(self) -> Rotation:
         return self._to_scipy()
 
+    @abstractmethod
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        """Return ``rotation`` as an array in the layout of this instance's ``value``."""
+
+    @abstractmethod
+    def _with_value(self, value: FloatArray) -> Self:
+        """Return a copy of this instance storing ``value``, keeping every other field."""
+
     def _with_rotation(self, rotation: Rotation) -> Self:
-        """Create an instance like this one, such as with the same format, for ``rotation``."""
-        return self._from_scipy(rotation)
+        # Copying through _with_value keeps fields such as a quaternion's format, and
+        # fields that subclasses add, on every derived rotation.
+        return self._with_value(self._value_from_scipy(rotation))
 
     @property
     def rotation_matrix(self) -> FloatArray:

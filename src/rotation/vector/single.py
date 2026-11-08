@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self
 
 import numpy as np
@@ -161,6 +161,12 @@ class RotationVector(SingleRotation):
     def rotation_vector(self) -> FloatArray:
         """Return the stored vector with shape (3,), whose length is not reduced to [0, π]."""
         return self.value
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return rotation.as_rotvec()
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_rotvec(np.array(self.value))

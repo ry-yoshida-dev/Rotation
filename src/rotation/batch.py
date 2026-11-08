@@ -26,10 +26,6 @@ class BatchRotation(RotationRepresentation, ABC, Generic[_SingleRotationT]):
     """
 
     @abstractmethod
-    def _with_value(self, value: FloatArray) -> Self:
-        """Create a batch like this one, such as with the same format, storing ``value``."""
-
-    @abstractmethod
     def _single_with_value(self, value: FloatArray) -> _SingleRotationT:
         """Create one element like this batch's, such as with the same format, storing ``value``."""
 

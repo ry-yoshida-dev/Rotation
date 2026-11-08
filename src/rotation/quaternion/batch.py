@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self
 
 import numpy as np
@@ -170,7 +170,7 @@ class Quaternions(BatchRotation[Quaternion]):
         format : QuaternionFormat
             Order of the components of the result.
         """
-        return type(self)(value=format.from_wxyz(self.wxyz), format=format)
+        return replace(self, value=format.from_wxyz(self.wxyz), format=format)
 
     @property
     def wxyz(self) -> FloatArray:
@@ -200,9 +200,13 @@ class Quaternions(BatchRotation[Quaternion]):
         The format is kept.
         """
         canonical = self._rotation.as_quat(canonical=True, scalar_first=True)
-        return type(self)(
-            value=self.format.from_wxyz(canonical.reshape(-1, 4)), format=self.format
-        )
+        return self._with_value(self.format.from_wxyz(canonical.reshape(-1, 4)))
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return self.format.from_wxyz(rotation.as_quat(scalar_first=True).reshape(-1, 4))
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_quat(np.array(self.wxyz).reshape(-1, 4), scalar_first=True)
@@ -213,12 +217,6 @@ class Quaternions(BatchRotation[Quaternion]):
             value=rotation.as_quat(scalar_first=True).reshape(-1, 4),
             format=QuaternionFormat.WXYZ,
         )
-
-    def _with_rotation(self, rotation: Rotation) -> Self:
-        return self._from_scipy(rotation).with_format(self.format)
-
-    def _with_value(self, value: FloatArray) -> Self:
-        return type(self)(value=value, format=self.format)
 
     def _single_with_value(self, value: FloatArray) -> Quaternion:
         return Quaternion(value=value, format=self.format)

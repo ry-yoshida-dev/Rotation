@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Self
 
 import numpy as np
@@ -146,6 +146,12 @@ class RotationMatrix(SingleRotation):
     def rotation_matrix(self) -> FloatArray:
         """Return the stored matrix with shape (3, 3)."""
         return self.value
+
+    def _value_from_scipy(self, rotation: Rotation) -> FloatArray:
+        return rotation.as_matrix()
+
+    def _with_value(self, value: FloatArray) -> Self:
+        return replace(self, value=value)
 
     def _to_scipy(self) -> Rotation:
         return Rotation.from_matrix(np.array(self.value))
