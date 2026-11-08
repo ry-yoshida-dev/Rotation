@@ -9,6 +9,7 @@ Rotations stored as rotation vectors (axis–angle): the direction is the rotati
 | Component | Description |
 |-----------|-------------|
 | [single.py](./single.py) | `RotationVector`, one rotation vector. |
+| [batch.py](./batch.py) | `RotationVectors`, N rotation vectors. |
 
 ## Examples
 

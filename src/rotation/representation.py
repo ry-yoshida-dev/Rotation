@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import numpy as np
 import numpy.typing as npt
@@ -22,6 +22,10 @@ class RotationRepresentation(ABC):
 
     value: FloatArray
     """Stored array, whose shape and layout depend on the representation."""
+
+    if TYPE_CHECKING:
+        # Every concrete class is a dataclass whose only constructor argument is value.
+        def __init__(self, *, value: FloatArray) -> None: ...
 
     @abstractmethod
     def _to_scipy(self) -> Rotation:

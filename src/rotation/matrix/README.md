@@ -9,6 +9,7 @@ Rotations stored as 3×3 matrices in SO(3), in the column-vector convention `v_n
 | Component | Description |
 |-----------|-------------|
 | [single.py](./single.py) | `RotationMatrix`, one rotation matrix. |
+| [batch.py](./batch.py) | `RotationMatrices`, N rotation matrices. |
 | [special_orthogonal.py](./special_orthogonal.py) | Validation of matrices and projection of approximate ones onto SO(3) by SVD or QR. |
 
 ## Examples

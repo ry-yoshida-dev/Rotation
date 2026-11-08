@@ -8,7 +8,7 @@ version = "0.0.1"
 authors = [
   { name = "Ryuto Yoshida" },
 ]
-description = "3D rotations in SO(3): rotation matrices, rotation vectors, and unit quaternions that convert into each other and share composition, inverse, powers, and comparison."
+description = "3D rotations in SO(3): rotation matrices, rotation vectors, and unit quaternions, single or batched, that convert into each other and share composition, inverse, powers, and comparison."
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [

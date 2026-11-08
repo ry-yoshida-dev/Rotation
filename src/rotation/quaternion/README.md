@@ -9,6 +9,7 @@ Rotations stored as unit quaternions in scalar-first order `[w, x, y, z]`. Other
 | Component | Description |
 |-----------|-------------|
 | [single.py](./single.py) | `Quaternion`, one unit quaternion. |
+| [batch.py](./batch.py) | `Quaternions`, N unit quaternions. |
 | [format.py](./format.py) | `QuaternionFormat`, the component order. |
 
 ## Examples
