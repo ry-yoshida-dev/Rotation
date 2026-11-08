@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from rotation.matrix import RotationMatrix
+from rotation.vector import RotationVector
 
 
 class TestRotationMatrixValidation:
@@ -159,5 +160,7 @@ class TestRotationMatrixOperations:
         """
         rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
         vector = rotation_matrix.rotation_vector
-        assert vector.shape == (3,)
-        assert np.issubdtype(vector.dtype, np.floating)
+        np.testing.assert_allclose(vector, [0.0, 0.0, np.pi / 2.0], atol=1e-6)
+        np.testing.assert_allclose(
+            RotationVector(value=vector).rotation_matrix, rotation_z_90_matrix, atol=1e-6
+        )

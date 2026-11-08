@@ -3,6 +3,8 @@ from __future__ import annotations
 import numpy as np
 from dataclasses import dataclass
 
+from scipy.spatial.transform import Rotation
+
 from ..utils import to_readonly_array
 from ..types import FloatArray
 from .mixin.axis import RotationMatrixAxisMixin
@@ -96,6 +98,4 @@ class RotationMatrix(
         FloatArray:
             The rotation vector of the rotation matrix.
         """
-        from ..vector import RotationVector
-        vector: RotationVector = RotationVector.from_matrix(self.value, validate=False)
-        return vector.value
+        return Rotation.from_matrix(self.value).as_rotvec()
