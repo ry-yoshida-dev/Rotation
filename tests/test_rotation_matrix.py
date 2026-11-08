@@ -71,7 +71,7 @@ class TestRotationMatrixFactories:
         Output: matrix close to the clean rotation.
         """
         noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(0).standard_normal((3, 3))
-        fitted = RotationMatrix.from_approximate_matrix_with_SVD(noisy)
+        fitted = RotationMatrix.from_approximate_matrix_by_svd(noisy)
         np.testing.assert_allclose(fitted.value, rotation_z_90_matrix, atol=1e-2)
 
     def test_from_approximate_matrix_by_qr(
@@ -141,7 +141,7 @@ class TestRotationMatrixOperations:
         Output: T and inv are equal and orthogonal.
         """
         rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
-        np.testing.assert_allclose(rotation_matrix.T, rotation_matrix.inv, atol=1e-6)
+        np.testing.assert_allclose(rotation_matrix.T, rotation_matrix.inverse, atol=1e-6)
         np.testing.assert_allclose(
             rotation_matrix.T @ rotation_matrix.value,
             np.eye(3),

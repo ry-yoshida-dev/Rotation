@@ -77,7 +77,7 @@ class RotationMatrix(
         return self.value.T
 
     @property
-    def inv(self) -> FloatArray:
+    def inverse(self) -> FloatArray:
         """
         Return the inverse of the rotation matrix.
 

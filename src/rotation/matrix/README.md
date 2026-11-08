@@ -20,7 +20,7 @@ import numpy as np
 from rotation.matrix import RotationMatrix
 
 noisy = np.eye(3) + 1e-3 * np.random.default_rng(0).standard_normal((3, 3))
-fitted = RotationMatrix.from_approximate_matrix_with_SVD(noisy)
+fitted = RotationMatrix.from_approximate_matrix_by_svd(noisy)
 composed = fitted @ RotationMatrix.unit_matrix()
 print(composed.z_axis)
 ```

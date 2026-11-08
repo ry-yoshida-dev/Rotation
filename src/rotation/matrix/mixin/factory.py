@@ -52,7 +52,7 @@ class RotationMatrixFactoryMixin:
         return cls(value=q)
 
     @classmethod
-    def from_approximate_matrix_with_SVD(
+    def from_approximate_matrix_by_svd(
         cls: type[_R],
         value: npt.ArrayLike,
     ) -> _R:
