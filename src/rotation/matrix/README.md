@@ -9,7 +9,7 @@
 | Component | Description |
 |-----------|-------------|
 | [container.py](./container.py) | `RotationMatrix`, the rotation matrix container. |
-| [protocols](./protocols/README.md) | Structural types that let the mixins return the concrete subclass. |
+| [protocol.py](./protocol.py) | Structural type that lets the mixins return the concrete subclass. |
 | [mixin](./mixin/README.md) | Axis accessors, factories, and composition shared by rotation matrix containers. |
 
 ## Examples

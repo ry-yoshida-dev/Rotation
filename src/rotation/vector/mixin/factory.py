@@ -7,7 +7,7 @@ import numpy.typing as npt
 
 from ...types import FloatArray
 from ...matrix import RotationMatrix
-from ..protocol import RotationVectorLike, rotation_vector_ctor
+from ..protocol import RotationVectorLike
 
 _R = TypeVar("_R", bound=RotationVectorLike)
 
@@ -57,7 +57,7 @@ class RotationVectorFactoryMixin:
         theta = np.arccos(cos_theta)
 
         if np.isclose(theta, 0.0):
-            return cast(_R, cls.zero_vector())
+            return cls(value=np.zeros(3, dtype=np.float64))
 
         axis_unnormalized = np.array(
             [
@@ -78,7 +78,7 @@ class RotationVectorFactoryMixin:
         else:
             axis = axis_unnormalized / norm
 
-        return rotation_vector_ctor(cls)(
+        return cls(
             value=axis * np.float64(theta),
         )
 
@@ -91,7 +91,7 @@ class RotationVectorFactoryMixin:
         -------
         RotationVector: The zero rotation vector.
         """
-        return rotation_vector_ctor(cls)(value=np.zeros(3, dtype=np.float64))
+        return cls(value=np.zeros(3, dtype=np.float64))
 
     @classmethod
     def from_axis_angle(
@@ -112,7 +112,7 @@ class RotationVectorFactoryMixin:
         a = np.asarray(axis, dtype=np.float64).reshape(-1)
         norm = float(np.linalg.norm(a))
         if np.isclose(norm, 0.0):
-            return cast(_R, cls.zero_vector())
+            return cls(value=np.zeros(3, dtype=np.float64))
 
         unit_axis = a / norm
-        return rotation_vector_ctor(cls)(value=unit_axis * np.float64(angle))
+        return cls(value=unit_axis * np.float64(angle))

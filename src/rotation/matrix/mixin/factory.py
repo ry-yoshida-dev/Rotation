@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 from ...types import FloatArray
-from ..protocols import RotationMatrixLike, rotation_matrix_ctor
+from ..protocol import RotationMatrixLike
 
 _R = TypeVar("_R", bound=RotationMatrixLike)
 
@@ -22,7 +22,7 @@ class RotationMatrixFactoryMixin:
         RotationMatrix:
             The unit rotation matrix.
         """
-        return rotation_matrix_ctor(cls)(value=np.eye(3, dtype=np.float64))
+        return cls(value=np.eye(3, dtype=np.float64))
 
     @classmethod
     def from_approximate_matrix_by_qr(
@@ -49,7 +49,7 @@ class RotationMatrixFactoryMixin:
         if det < 0:
             q = q.copy()
             q[:, -1] *= -1
-        return rotation_matrix_ctor(cls)(value=q)
+        return cls(value=q)
 
     @classmethod
     def from_approximate_matrix_with_SVD(
@@ -78,7 +78,7 @@ class RotationMatrixFactoryMixin:
             u[:, -1] *= -1
             rotation_matrix = u @ vh
 
-        return rotation_matrix_ctor(cls)(value=rotation_matrix)
+        return cls(value=rotation_matrix)
 
     @staticmethod
     def validate_rotation_matrix_array(

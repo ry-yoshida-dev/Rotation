@@ -9,7 +9,7 @@ Rotation vectors (axis–angle): the direction is the rotation axis and the leng
 | Component | Description |
 |-----------|-------------|
 | [container.py](./container.py) | `RotationVector`, the rotation vector container. |
-| [protocol.py](./protocol.py) | Structural types that let the mixins return the concrete subclass. |
+| [protocol.py](./protocol.py) | Structural type that lets the mixins return the concrete subclass. |
 | [mixin](./mixin/README.md) | Factories shared by rotation vector containers. |
 
 ## Examples

@@ -2,19 +2,16 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from ..protocols import RotationMatrixLike, rotation_matrix_ctor
+from ..protocol import RotationMatrixLike
 
-_R = TypeVar("_R", bound=RotationMatrixLike)
+_RotationMatrix = TypeVar("_RotationMatrix", bound=RotationMatrixLike)
 
 
 class RotationMatrixSpecialMixin:
-    def __matmul__(self: _R, other: RotationMatrixLike) -> _R:
-        """
-        Multiply two rotation matrices.
+    """Composition of rotation matrices with ``@``."""
 
-        Returns
-        -------
-        RotationMatrix:
-            The product of the two rotation matrices.
-        """
-        return rotation_matrix_ctor(type(self))(value=self.value @ other.value)
+    def __matmul__(
+        self: _RotationMatrix, other: RotationMatrixLike
+    ) -> _RotationMatrix:
+        """Return the composition that applies ``other`` first and then ``self``."""
+        return type(self)(value=self.value @ other.value)
