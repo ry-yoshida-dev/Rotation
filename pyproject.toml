@@ -25,11 +25,6 @@ dependencies = [
     "scipy>=1.14",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0",
-]
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
@@ -43,3 +38,11 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 rotation = ["py.typed"]
+
+[tool.uv]
+exclude-newer = "7 days"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
