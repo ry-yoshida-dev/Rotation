@@ -114,7 +114,7 @@ class RotationVectors(BatchRotation[RotationVector]):
 
         Unlike other representations, they are not reduced to [0, π].
         """
-        return np.linalg.norm(self.value, axis=1)
+        return np.asarray(np.linalg.norm(self.value, axis=1), dtype=np.float64)
 
     @property
     def axes(self) -> FloatArray:
