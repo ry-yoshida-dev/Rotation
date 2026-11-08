@@ -9,7 +9,7 @@ from scipy.spatial.transform import Rotation
 
 from ..batch import BatchRotation
 from ..types import FloatArray
-from ..utils import to_readonly_array
+from ..utils import to_readonly_array, vector_norms
 from .single import RotationVector
 from .skew_symmetric import SkewSymmetricMatrix
 
@@ -74,7 +74,7 @@ class RotationVectors(BatchRotation[RotationVector]):
             raise ValueError(
                 f"Invalid angles: must be a shape ({len(axes_array)},) array, got shape {angles_array.shape}."
             )
-        norms = np.linalg.norm(axes_array, axis=1)
+        norms = vector_norms(axes_array)
         if np.any(np.isclose(norms, 0.0)):
             raise ValueError("Invalid rotation axes: must have non-zero length.")
         return cls(value=axes_array * (angles_array / norms)[:, np.newaxis])
@@ -114,7 +114,7 @@ class RotationVectors(BatchRotation[RotationVector]):
 
         Unlike other representations, they are not reduced to [0, π].
         """
-        return np.asarray(np.linalg.norm(self.value, axis=1), dtype=np.float64)
+        return vector_norms(self.value)
 
     @property
     def axes(self) -> FloatArray:

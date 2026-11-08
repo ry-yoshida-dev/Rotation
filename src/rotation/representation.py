@@ -9,6 +9,7 @@ import numpy.typing as npt
 from scipy.spatial.transform import Rotation
 
 from .types import FloatArray
+from .utils import vector_norms
 
 
 class RotationRepresentation(ABC):
@@ -140,7 +141,7 @@ class RotationRepresentation(ABC):
     ) -> Rotation:
         # Normalized 4D Gaussian samples are uniform on the unit quaternions, hence on SO(3).
         components = generator.standard_normal((*shape, 4))
-        components /= np.linalg.norm(components, axis=-1, keepdims=True)
+        components /= vector_norms(components, keepdims=True)
         return Rotation.from_quat(components, scalar_first=True)
 
     @staticmethod

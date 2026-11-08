@@ -15,4 +15,4 @@ Immutable rotations in SO(3). Each representation stores a validated, read-only 
 | [vector](./vector/README.md) | Rotation vectors (axis–angle) and their skew-symmetric matrices. |
 | [quaternion](./quaternion/README.md) | Unit quaternions and their component order. |
 | [types.py](./types.py) | Shared NumPy array type alias for floating-point values. |
-| [utils.py](./utils.py) | Read-only copies stored by every container. |
+| [utils.py](./utils.py) | Read-only copies stored by every container, and vector norms. |

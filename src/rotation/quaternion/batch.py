@@ -11,7 +11,7 @@ from scipy.spatial.transform import Rotation
 from ..batch import BatchRotation
 from ..single import SingleRotation
 from ..types import FloatArray
-from ..utils import to_readonly_array
+from ..utils import to_readonly_array, vector_norms
 from .format import QuaternionFormat
 from .single import Quaternion
 
@@ -45,7 +45,7 @@ class Quaternions(BatchRotation[Quaternion]):
     def __post_init__(self) -> None:
         """Validate the quaternions and store a read-only float64 copy of them."""
         components = Quaternions._as_components(self.value)
-        norms = np.linalg.norm(components, axis=1)
+        norms = vector_norms(components)
         if not np.allclose(norms, 1.0, atol=1e-6):
             raise ValueError(
                 f"Invalid quaternions: must be normalized, got norms {norms}."
@@ -73,7 +73,7 @@ class Quaternions(BatchRotation[Quaternion]):
             length.
         """
         array = Quaternions._as_components(components)
-        norms = np.linalg.norm(array, axis=1)
+        norms = vector_norms(array)
         if np.any(np.isclose(norms, 0.0)):
             raise ValueError("Invalid quaternions: must have non-zero length.")
         return cls(value=array / norms[:, np.newaxis], format=format)
