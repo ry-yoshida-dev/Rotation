@@ -1,3 +1,2 @@
-numpy
+numpy>=1.26
 scipy>=1.14
-units @ git+https://github.com/ry-yoshida-dev/Units.git
