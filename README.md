@@ -26,6 +26,8 @@ print(matrix.x_axis)  # [0.0, 1.0, 0.0]
 composed = matrix @ matrix
 print(composed.rotation_vector)  # [0.0, 0.0, 3.14159265...]
 
-quaternion = Quaternion(value=np.array([1.0, 0.0, 0.0, 0.0]), format=QuaternionFormat.WXYZ)
+quaternion = Quaternion(
+    value=np.array([1.0, 0.0, 0.0, 0.0]), format=QuaternionFormat.WXYZ
+)
 print(quaternion.xyzw)  # [0.0, 0.0, 0.0, 1.0]
 ```

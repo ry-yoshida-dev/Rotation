@@ -17,7 +17,7 @@ class TestRotationVectorValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="shape"):
-            RotationVector(value=np.zeros(2, dtype=np.float64))
+            _ = RotationVector(value=np.zeros(2, dtype=np.float64))
 
 
 class TestRotationVectorFactories:
@@ -44,7 +44,9 @@ class TestRotationVectorFactories:
             axis=np.array([0.0, 0.0, 1.0], dtype=np.float64),
             angle=np.pi / 2.0,
         )
-        np.testing.assert_allclose(rotation_vector.value, rotation_z_90_vector, atol=1e-6)
+        np.testing.assert_allclose(
+            rotation_vector.value, rotation_z_90_vector, atol=1e-6
+        )
 
     def test_from_matrix(
         self,
@@ -61,7 +63,6 @@ class TestRotationVectorFactories:
         unit_axis = rotation_vector.value / rotation_vector.angle
         np.testing.assert_allclose(unit_axis, np.array([0.0, 0.0, 1.0]), atol=1e-6)
 
-
     def test_from_matrix_recovers_half_turn(self) -> None:
         """
         Verify from_matrix handles the π rotation, where the axis is not in the skew part.
@@ -71,7 +72,9 @@ class TestRotationVectorFactories:
         """
         rotation_vector = RotationVector.from_matrix(np.diag([1.0, -1.0, -1.0]))
         assert rotation_vector.angle == pytest.approx(np.pi, abs=1e-6)
-        np.testing.assert_allclose(np.abs(rotation_vector.value), [np.pi, 0.0, 0.0], atol=1e-6)
+        np.testing.assert_allclose(
+            np.abs(rotation_vector.value), [np.pi, 0.0, 0.0], atol=1e-6
+        )
 
     def test_from_matrix_rejects_reflection(self) -> None:
         """
@@ -90,8 +93,12 @@ class TestRotationVectorFactories:
         Input: +Z axis of length 2 and π/2 radians.
         Output: vector of length π/2 along +Z.
         """
-        rotation_vector = RotationVector.from_axis_angle(axis=[0.0, 0.0, 2.0], angle=np.pi / 2.0)
-        np.testing.assert_allclose(rotation_vector.value, [0.0, 0.0, np.pi / 2.0], atol=1e-6)
+        rotation_vector = RotationVector.from_axis_angle(
+            axis=[0.0, 0.0, 2.0], angle=np.pi / 2.0
+        )
+        np.testing.assert_allclose(
+            rotation_vector.value, [0.0, 0.0, np.pi / 2.0], atol=1e-6
+        )
 
     @pytest.mark.parametrize("axis", [[0.0, 0.0, 0.0], [0.0, 1.0]])
     def test_from_axis_angle_rejects_invalid_axis(self, axis: list[float]) -> None:

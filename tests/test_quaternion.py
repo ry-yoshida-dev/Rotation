@@ -17,7 +17,7 @@ class TestQuaternionValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="shape"):
-            Quaternion(
+            _ = Quaternion(
                 value=np.zeros(3, dtype=np.float64),
                 format=QuaternionFormat.WXYZ,
             )
@@ -30,7 +30,7 @@ class TestQuaternionValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="normalized"):
-            Quaternion(
+            _ = Quaternion(
                 value=np.array([2.0, 0.0, 0.0, 0.0], dtype=np.float64),
                 format=QuaternionFormat.WXYZ,
             )

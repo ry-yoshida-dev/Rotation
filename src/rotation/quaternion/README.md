@@ -18,7 +18,9 @@ import numpy as np
 
 from rotation.quaternion import Quaternion, QuaternionFormat
 
-quaternion = Quaternion(value=np.array([0.0, 0.0, 0.0, 1.0]), format=QuaternionFormat.XYZW)
+quaternion = Quaternion(
+    value=np.array([0.0, 0.0, 0.0, 1.0]), format=QuaternionFormat.XYZW
+)
 print(quaternion.wxyz)  # [1.0, 0.0, 0.0, 0.0]
 print(quaternion.rotation_matrix)
 ```

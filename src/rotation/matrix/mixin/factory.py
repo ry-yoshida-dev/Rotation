@@ -6,79 +6,74 @@ import numpy as np
 import numpy.typing as npt
 
 from ...types import FloatArray
+from ...utils import determinant
 from ..protocol import RotationMatrixLike
 
-_R = TypeVar("_R", bound=RotationMatrixLike)
+_RotationMatrix = TypeVar("_RotationMatrix", bound=RotationMatrixLike)
 
 
 class RotationMatrixFactoryMixin:
-    @classmethod
-    def unit_matrix(cls: type[_R]) -> _R:
-        """
-        Create the identity rotation matrix.
+    """Factories and validation of rotation matrices."""
 
-        Returns
-        -------
-        RotationMatrix:
-            The unit rotation matrix.
-        """
+    @classmethod
+    def unit_matrix(cls: type[_RotationMatrix]) -> _RotationMatrix:
+        """Create the identity rotation matrix."""
         return cls(value=np.eye(3, dtype=np.float64))
 
     @classmethod
     def from_approximate_matrix_by_qr(
-        cls: type[_R],
+        cls: type[_RotationMatrix],
         value: npt.ArrayLike,
-    ) -> _R:
+    ) -> _RotationMatrix:
         """
-        Create a RotationMatrix object from an approximate rotation matrix by QR decomposition.
+        Create a rotation matrix from an approximate one by QR decomposition.
+
+        The Q factor is used, with its last column negated when needed to make the
+        determinant +1.
 
         Parameters
         ----------
-        value: array_like
-            The approximate rotation matrix.
+        value : array_like
+            Approximate rotation matrix with shape (3, 3).
 
-        Returns
-        -------
-        RotationMatrix:
-            The rotation matrix from the approximate matrix.
+        Raises
+        ------
+        ValueError
+            If ``value`` does not have shape (3, 3).
         """
-        arr = np.asarray(value, dtype=np.float64)
-        q, _ = np.linalg.qr(arr)
-        det = np.linalg.det(q)
-
-        if det < 0:
-            q = q.copy()
-            q[:, -1] *= -1
-        return cls(value=q)
+        matrix = RotationMatrixFactoryMixin._as_square_matrix(value)
+        orthogonal: FloatArray = np.linalg.qr(matrix).Q
+        determinant_value = determinant(orthogonal)
+        if determinant_value < 0:
+            orthogonal[:, -1] *= -1
+        return cls(value=orthogonal)
 
     @classmethod
     def from_approximate_matrix_by_svd(
-        cls: type[_R],
+        cls: type[_RotationMatrix],
         value: npt.ArrayLike,
-    ) -> _R:
+    ) -> _RotationMatrix:
         """
-        Create a RotationMatrix object from an approximate rotation matrix by SVD decomposition.
+        Create the rotation matrix closest to an approximate one by SVD.
 
         Parameters
         ----------
-        value: array_like
-            The approximate rotation matrix.
+        value : array_like
+            Approximate rotation matrix with shape (3, 3).
 
-        Returns
-        -------
-        RotationMatrix:
-            The rotation matrix from the approximate matrix.
+        Raises
+        ------
+        ValueError
+            If ``value`` does not have shape (3, 3).
         """
-        arr = np.asarray(value, dtype=np.float64)
-        u, _, vh = np.linalg.svd(arr)
-        rotation_matrix: FloatArray = u @ vh
-
-        if np.linalg.det(rotation_matrix) < 0:
-            u = u.copy()
-            u[:, -1] *= -1
-            rotation_matrix = u @ vh
-
-        return cls(value=rotation_matrix)
+        matrix = RotationMatrixFactoryMixin._as_square_matrix(value)
+        decomposition = np.linalg.svd(matrix)
+        left: FloatArray = decomposition.U
+        right: FloatArray = decomposition.Vh
+        determinant_value = determinant(left @ right)
+        if determinant_value < 0:
+            left[:, -1] *= -1
+        return cls(value=left @ right)
 
     @staticmethod
     def validate_rotation_matrix_array(
@@ -87,17 +82,35 @@ class RotationMatrixFactoryMixin:
         atol: float = 1e-6,
     ) -> None:
         """
-        Raise ``ValueError`` unless ``value`` is a proper 3×3 rotation matrix in SO(3).
+        Check that ``value`` is a proper rotation matrix in SO(3).
 
-        Use this when accepting a raw ``FloatArray`` so invalid matrices cannot slip through
-        without constructing :class:`RotationMatrix`.
+        Parameters
+        ----------
+        value : array_like
+            Matrix to check.
+        atol : float, default 1e-6
+            Absolute tolerance of the orthogonality and determinant checks.
+
+        Raises
+        ------
+        ValueError
+            If ``value`` does not have shape (3, 3), is not orthogonal, or does not
+            have determinant +1.
         """
-        arr = np.asarray(value, dtype=np.float64)
-        if arr.shape != (3, 3):
+        matrix = RotationMatrixFactoryMixin._as_square_matrix(value)
+        if not np.allclose(matrix.T @ matrix, np.eye(3), atol=atol):
+            raise ValueError("Invalid rotation matrix: must be orthogonal.")
+        determinant_value = determinant(matrix)
+        if not np.isclose(determinant_value, 1.0, atol=atol):
             raise ValueError(
-                f"Invalid rotation matrix: must be a shape (3, 3) array, got shape {arr.shape}."
+                f"Invalid rotation matrix: must have determinant +1, got {determinant_value}."
             )
-        if not np.allclose(arr.T @ arr, np.eye(3), atol=atol):
-            raise ValueError("Invalid rotation matrix: must be orthogonal")
-        if not np.isclose(np.linalg.det(arr), 1.0, atol=atol):
-            raise ValueError("Invalid rotation matrix: must have correct determinant")
+
+    @staticmethod
+    def _as_square_matrix(value: npt.ArrayLike) -> FloatArray:
+        matrix = np.asarray(value, dtype=np.float64)
+        if matrix.shape != (3, 3):
+            raise ValueError(
+                f"Invalid rotation matrix: must be a shape (3, 3) array, got shape {matrix.shape}."
+            )
+        return matrix

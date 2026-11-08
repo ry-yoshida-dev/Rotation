@@ -21,7 +21,9 @@ class TestFloatArray:
         array: FloatArray = np.array([1.0, 2.0, 3.0], dtype=np.float64)
         assert np.issubdtype(array.dtype, np.floating)
 
-    def test_rotation_matrix_value_is_floating(self, identity_matrix: np.ndarray) -> None:
+    def test_rotation_matrix_value_is_floating(
+        self, identity_matrix: np.ndarray
+    ) -> None:
         """
         Verify RotationMatrix.value is a floating ndarray.
 

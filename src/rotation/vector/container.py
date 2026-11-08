@@ -1,65 +1,50 @@
 from __future__ import annotations
 
-import numpy as np
 from dataclasses import dataclass
-from scipy.spatial.transform import Rotation  # type: ignore
 
-from ..utils import to_readonly_array
+import numpy as np
+from scipy.spatial.transform import Rotation
+
 from ..types import FloatArray
+from ..utils import to_readonly_array
 from .mixin.factory import RotationVectorFactoryMixin
 
 
 @dataclass(frozen=True, eq=False)
 class RotationVector(RotationVectorFactoryMixin):
     """
-    Container class for rotation vector (axis-angle) representation.
+    Container class for rotation vectors (axis–angle).
 
-    The vector direction represents the axis of rotation, and its
-    magnitude represents the rotation angle in radians.
+    The direction of the vector is the rotation axis, and its length is the rotation
+    angle in radians.
 
-    Attributes
+    Parameters
     ----------
     value : FloatArray
-        The rotation vector with shape (3,).
+        Rotation vector with shape (3,).
 
     Raises
     ------
-    ValueError:
-        If the input array is not a shape (3,) array.
+    ValueError
+        If ``value`` does not have shape (3,).
     """
+
     value: FloatArray
 
     def __post_init__(self) -> None:
-        """Store a read-only copy of the vector and validate it."""
-        object.__setattr__(self, "value", to_readonly_array(self.value))
-        self._is_valid_rotation_vector()
-
-    def _is_valid_rotation_vector(self) -> None:
-        """Check if the vector has the correct shape."""
+        """Validate the vector and store a read-only copy of it."""
         if self.value.shape != (3,):
             raise ValueError(
-                f"Invalid rotation vector: must be a shape (3,) array, got {self.value.shape}."
+                f"Invalid rotation vector: must be a shape (3,) array, got shape {self.value.shape}."
             )
+        object.__setattr__(self, "value", to_readonly_array(self.value))
 
     @property
     def angle(self) -> float:
-        """
-        Return the rotation angle θ in radians.
-
-        Returns
-        -------
-        float: The rotation angle (norm of the vector).
-        """
+        """Return the rotation angle in radians, the length of the vector."""
         return float(np.linalg.norm(self.value))
 
     @property
     def rotation_matrix(self) -> FloatArray:
-        """
-        Rotation matrix for this vector (via scipy ``Rotation.from_rotvec``).
-
-        Returns
-        -------
-        FloatArray: The corresponding 3x3 rotation matrix (float64).
-        """
-        scipy_rotation = Rotation.from_rotvec(self.value)
-        return np.asarray(scipy_rotation.as_matrix(), dtype=np.float64)
+        """Return the 3×3 rotation matrix in the column-vector convention ``v_new = R @ v``."""
+        return Rotation.from_rotvec(self.value).as_matrix()

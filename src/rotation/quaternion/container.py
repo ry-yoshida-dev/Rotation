@@ -1,61 +1,52 @@
-import numpy as np
 from dataclasses import dataclass
 from functools import cached_property
-from scipy.spatial.transform import Rotation # type: ignore
 
-from ..utils import to_readonly_array
+import numpy as np
+from scipy.spatial.transform import Rotation
+
 from ..types import FloatArray
+from ..utils import to_readonly_array
 from .format import QuaternionFormat
 
 
 @dataclass(frozen=True, eq=False)
 class Quaternion:
     """
-    Container class for quaternion representation of rotation.
+    Container class for unit quaternions.
 
     Parameters
     ----------
-    value: FloatArray
-        Quaternion values with shape (4,).
-    format: QuaternionFormat
-        The format of the quaternion (WXYZ or XYZW).
+    value : FloatArray
+        Quaternion components with shape (4,), ordered by ``format``.
+    format : QuaternionFormat
+        Order of the components.
+
+    Raises
+    ------
+    ValueError
+        If ``value`` does not have shape (4,) or is not normalized within an absolute
+        tolerance of 1e-6.
     """
+
     value: FloatArray
     format: QuaternionFormat
 
     def __post_init__(self) -> None:
-        """Store a read-only copy of the quaternion and validate it."""
-        object.__setattr__(self, "value", to_readonly_array(self.value))
-        self._is_valid_quaternion()
-
-    def _is_valid_quaternion(self) -> None:
-        """
-        Check if the quaternion is valid.
-        
-        Raises
-        ------
-        ValueError:
-            If the quaternion is not a shape (4,) array.
-            If the quaternion is not normalized.
-        """
+        """Validate the quaternion and store a read-only copy of it."""
         if self.value.shape != (4,):
-            raise ValueError(f"Invalid quaternion: must be a shape (4,) array, got shape {self.value.shape}.")
-        
-        # Check if quaternion is normalized (approximately)
-        norm = np.linalg.norm(self.value)
+            raise ValueError(
+                f"Invalid quaternion: must be a shape (4,) array, got shape {self.value.shape}."
+            )
+        norm = float(np.linalg.norm(self.value))
         if not np.isclose(norm, 1.0, atol=1e-6):
-            raise ValueError(f"Invalid quaternion: must be normalized (norm={norm})")
+            raise ValueError(
+                f"Invalid quaternion: must be normalized, got norm {norm}."
+            )
+        object.__setattr__(self, "value", to_readonly_array(self.value))
 
     @property
     def wxyz(self) -> FloatArray:
-        """
-        Get quaternion in WXYZ format.
-        
-        Returns
-        -------
-        FloatArray:
-            The quaternion in WXYZ format.
-        """
+        """Return the components in scalar-first order."""
         match self.format:
             case QuaternionFormat.WXYZ:
                 return self.value
@@ -64,14 +55,7 @@ class Quaternion:
 
     @property
     def xyzw(self) -> FloatArray:
-        """
-        Get quaternion in XYZW format (scipy format).
-        
-        Returns
-        -------
-        FloatArray:
-            The quaternion in XYZW format.
-        """
+        """Return the components in scalar-last order."""
         match self.format:
             case QuaternionFormat.XYZW:
                 return self.value
@@ -80,29 +64,12 @@ class Quaternion:
 
     @property
     def is_scalar_first(self) -> bool:
-        """
-        Check if the quaternion is in scalar first format.
-        
-        Returns
-        -------
-        bool:
-            True if the quaternion is in WXYZ format, False if in XYZW format.
-        """
+        """Return whether ``value`` stores the scalar component first."""
         return self.format.is_scalar_first
 
     @cached_property
     def rotation_matrix(self) -> FloatArray:
-        """
-        Convert quaternion to rotation matrix.
-
-        Returns
-        -------
-        FloatArray:
-            The 3×3 rotation matrix (float64), column-vector convention
-            ``v_new = R @ v``.
-        """
-        scipy_rotation = Rotation.from_quat(
-            self.value,
-            scalar_first=self.is_scalar_first,
-        )
-        return np.asarray(scipy_rotation.as_matrix(), dtype=np.float64)
+        """Return the 3×3 rotation matrix in the column-vector convention ``v_new = R @ v``."""
+        return Rotation.from_quat(
+            self.value, scalar_first=self.is_scalar_first
+        ).as_matrix()

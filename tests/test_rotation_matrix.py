@@ -27,7 +27,7 @@ class TestRotationMatrixValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="shape"):
-            RotationMatrix(value=np.eye(2, dtype=np.float64))
+            _ = RotationMatrix(value=np.eye(2, dtype=np.float64))
 
     def test_rejects_non_orthogonal_matrix(self) -> None:
         """
@@ -37,7 +37,7 @@ class TestRotationMatrixValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="orthogonal"):
-            RotationMatrix(
+            _ = RotationMatrix(
                 value=np.array(
                     [
                         [1.0, 2.0, 0.0],
@@ -56,7 +56,7 @@ class TestRotationMatrixValidation:
         Output: ValueError.
         """
         with pytest.raises(ValueError, match="determinant"):
-            RotationMatrix(value=np.diag([1.0, 1.0, -1.0]).astype(np.float64))
+            _ = RotationMatrix(value=np.diag([1.0, 1.0, -1.0]).astype(np.float64))
 
 
 class TestRotationMatrixFactories:
@@ -70,7 +70,9 @@ class TestRotationMatrixFactories:
         Input: noisy 90° Z rotation.
         Output: matrix close to the clean rotation.
         """
-        noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(0).standard_normal((3, 3))
+        noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(0).standard_normal(
+            (3, 3)
+        )
         fitted = RotationMatrix.from_approximate_matrix_by_svd(noisy)
         np.testing.assert_allclose(fitted.value, rotation_z_90_matrix, atol=1e-2)
 
@@ -84,7 +86,9 @@ class TestRotationMatrixFactories:
         Input: noisy 90° Z rotation.
         Output: orthogonal 3×3 matrix with determinant +1.
         """
-        noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(1).standard_normal((3, 3))
+        noisy = rotation_z_90_matrix + 1e-3 * np.random.default_rng(1).standard_normal(
+            (3, 3)
+        )
         fitted = RotationMatrix.from_approximate_matrix_by_qr(noisy)
         assert fitted.is_orthogonal
         assert fitted.is_determinant_correct
@@ -141,7 +145,9 @@ class TestRotationMatrixOperations:
         Output: T and inv are equal and orthogonal.
         """
         rotation_matrix = RotationMatrix(value=rotation_z_90_matrix)
-        np.testing.assert_allclose(rotation_matrix.T, rotation_matrix.inverse, atol=1e-6)
+        np.testing.assert_allclose(
+            rotation_matrix.T, rotation_matrix.inverse, atol=1e-6
+        )
         np.testing.assert_allclose(
             rotation_matrix.T @ rotation_matrix.value,
             np.eye(3),
@@ -162,5 +168,7 @@ class TestRotationMatrixOperations:
         vector = rotation_matrix.rotation_vector
         np.testing.assert_allclose(vector, [0.0, 0.0, np.pi / 2.0], atol=1e-6)
         np.testing.assert_allclose(
-            RotationVector(value=vector).rotation_matrix, rotation_z_90_matrix, atol=1e-6
+            RotationVector(value=vector).rotation_matrix,
+            rotation_z_90_matrix,
+            atol=1e-6,
         )
